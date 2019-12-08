@@ -3,10 +3,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>skylb-proto</artifactId>
+    <artifactId>skylb-server</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>gRPC SkyLB API ProtoBuffer</name>
+    <name>gRPC SkyLB Server</name>
 
     <parent>
         <groupId>com.binchencoder.skylb</groupId>
@@ -31,9 +31,15 @@
     </repositories>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <encoding>UTF-8</encoding>
         <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Maven properties -->
+        <maven.test.skip>false</maven.test.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <!-- Compiler settings properties -->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
@@ -41,11 +47,28 @@
     </properties>
 
     <dependencies>
+        <!-- Self services. -->
+        <!-- data-proto have only one
+         version (the SNAPSHOT version), thus can be enclosed by skylb-client. -->
         <dependency>
             <groupId>com.binchencoder.gateway</groupId>
             <artifactId>data-proto</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.binchencoder.skylb</groupId>
+            <artifactId>skylb-api-proto</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
+        <!-- jetcd: A Java Client for etcd -->
+        <dependency>
+            <groupId>io.etcd</groupId>
+            <artifactId>jetcd-core</artifactId>
+            <version>0.4.2-SNAPSHOT</version>
+        </dependency>
+
+        <!-- gRPC + ProtoBuffer -->
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-protobuf</artifactId>
@@ -56,7 +79,6 @@
             <artifactId>grpc-stub</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
@@ -65,6 +87,27 @@
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>googleapis-common-protos</artifactId>
+        </dependency>
+
+        <!-- Logging. -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+        </dependency>
+
+        <!-- Apache Commons -->
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>1.2</version>
         </dependency>
     </dependencies>
     <build>
@@ -116,35 +159,6 @@
                             <goal>site</goal>
                         </goals>
                         <phase>deploy</phase>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-                <version>0.5.0</version>
-                <configuration>
-                    <!-- The version of protoc must match protobuf-java. If you don't depend
-                      on protobuf-java directly, you will be transitively depending on the protobuf-java
-                      version that grpc depends on. -->
-                    <protocArtifact>
-                      com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
-                    </protocArtifact>
-                    <pluginId>grpc-java</pluginId>
-                    <pluginArtifact>
-                      io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}
-                    </pluginArtifact>
-                    <protoSourceRoot>../</protoSourceRoot>
-                    <includes>
-                        <param>skylb-proto/api.proto</param>
-                    </includes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>compile-custom</goal>
-                        </goals>
                     </execution>
                 </executions>
             </plugin>
