@@ -1,0 +1,178 @@
+syntax = "proto3";
+
+package api;
+
+option java_multiple_files = false;
+option java_outer_classname = "ClientProtos";
+option java_package = "com.binchencoder.skylb.proto";
+
+//import "gateway-proto/data/data.proto";
+//import "data/data.proto";
+
+// The message describing a service spec.
+message ServiceSpec {
+	string namespace    = 1;
+	string service_name = 2;
+	string port_name    = 3;
+}
+
+// The request message to resolve a service name.
+message ResolveRequest {
+	repeated ServiceSpec services = 1;
+
+//	data.ServiceId callerServiceId = 2;
+	string callerServiceName       = 3;
+
+	// If set to true, SkyLB will deliver the full endpoints of the target
+	// service instead of delta (Add or Delete).
+	bool resolve_full_endpoints = 4;
+}
+
+// Enum definition for endpoint operation.
+enum Operation {
+	Add    = 0;
+	Delete = 1;
+}
+
+// The message defining a service instance endpoint.
+message InstanceEndpoint {
+	// This field will be ignored when resolve_full_endpoints is set to true.
+	Operation op = 1 [deprecated = true];
+
+	string host   = 2;
+	int32  port   = 3;
+	int32  weight = 4;
+}
+
+// The message defining a set of endpoints for one service.
+message ServiceEndpoints {
+	ServiceSpec spec = 1;
+
+	repeated InstanceEndpoint inst_endpoints = 2;
+}
+
+// The response message of resolving a service name.
+message ResolveResponse {
+	// The endpoints change of a service.
+	ServiceEndpoints svc_endpoints = 1;
+}
+
+// The request message to report load of a service instance.
+message ReportLoadRequest {
+	ServiceSpec spec = 1;
+
+	int32 port   = 2;
+	int32 weight = 3;
+
+	// When fixed_host is provided, SkyLB server will use it as host address
+	// instead of trying to lookup the requester's address.
+	//
+	// This is used by use cases like an agent program registering service for
+	// a 3rd party program, like a SQL database, for which we are not able
+	// to let them register themselves.
+	//
+	// If your service relies on SkyLB's auto service registry/discovery,
+	// leave this field empty.
+	string fixed_host = 4;
+}
+
+// The response message of reporting load of a service instance.
+message ReportLoadResponse {
+}
+
+// The diagnostic instruction to check health of the service instances
+// to which the client connects.
+message CheckHealthInstruction {
+}
+
+// The health info of a service instance for a client.
+message HealthInfo {
+	// The service endpoint.
+	string endpoint = 1;
+
+	// The latency time in milliseconds for the health check.
+	// -1 means timeout of the service instance.
+	// The client should set a timeout like 1s.
+	int32 latency = 2;
+}
+
+// The diagnostic results of checking health.
+message CheckHealthResult {
+	repeated HealthInfo health_info = 1;
+}
+
+// The diagnostic instruction to fetch the service instances to which the
+// client connects.
+message FetchInstancesInstruction {
+}
+
+// The diagnostic results of fetching instances.
+message FetchInstancesResult {
+	ServiceEndpoints svc_endpoints = 1;
+}
+
+// The diagnostic instruction to add service instances directly to the client.
+message AddInstanceInstruction {
+	ServiceEndpoints svc_endpoints = 1;
+}
+
+// The diagnostic results of adding service instances.
+message AddInstanceResult {
+}
+
+// The diagnostic instruction to delete service instances directly from
+// the client.
+message DeleteInstanceInstruction {
+	ServiceEndpoints svc_endpoints = 1;
+}
+
+// The diagnostic results of deleting service instances.
+message DeleteInstanceResult {
+}
+
+// The request message to diagnose the SkyLB client.
+message DiagnoseRequest {
+	oneof instruction {
+		CheckHealthInstruction    check_health    = 1;
+		FetchInstancesInstruction fetch_instances = 2;
+		AddInstanceInstruction    add_instance    = 3;
+		DeleteInstanceInstruction delete_instance = 4;
+	}
+}
+
+// The response message of diagnosing the SkyLB client.
+message DiagnoseResponse {
+	oneof result {
+		CheckHealthResult    check_health    = 1;
+		FetchInstancesResult fetch_instances = 2;
+		AddInstanceResult    add_instance    = 3;
+		DeleteInstanceResult delete_instance = 4;
+	}
+}
+
+// The gRPC service definition for SkyLB.
+service Skylb {
+	// RPC method "Resolve" resolves a service name to a set of service
+	// instance end points, and stream returns the end points to client
+	// for the initial connection and whenever new service instance is
+	// added or existing service instance died.
+	rpc Resolve (ResolveRequest) returns (stream ResolveResponse);
+
+	// RPC method "ReportLoad" reports a service instance's load to SkyLB.
+	// In Kubernetes, the report is used to calculate the weight of an
+	// instance. Out of Kubernetes, besides calculating weight, the report
+	// is also used as a heartbeat and service registration.
+	rpc ReportLoad (stream ReportLoadRequest) returns (ReportLoadResponse);
+
+	// RPC method "AttachForDiagnosis" attaches a two-way stream between client
+	// and SkyLB server. A DiagnoseRequest can be sent by SkyLB to the client
+	// and the client should return a DiagnoseResponse.
+	//
+	// A diagnosis can be one of:
+	// - Fetch the service instance list connected from a specific client.
+	// - Add a service instance to a specific client.
+	// - Delete a service instance from a specific client.
+	// - Health check.
+	rpc AttachForDiagnosis (stream DiagnoseResponse)
+		returns (stream DiagnoseRequest);
+}
