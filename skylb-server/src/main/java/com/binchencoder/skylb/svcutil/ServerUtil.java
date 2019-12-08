@@ -20,6 +20,11 @@ public class ServerUtil {
     opt.setRequired(false);
     options.addOption(opt);
 
+    opt = new Option("etcd-endpoints", "etcdEndpoints", true,
+        "Comma separated etcd endpoints, eg: http://192.168.0.1:2379,192.168.0.2:2379");
+    opt.setRequired(true);
+    options.addOption(opt);
+
     return options;
   }
 
