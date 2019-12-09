@@ -65,7 +65,7 @@ public class EtcdClient {
   public void refreshKey(final String key) {
     PutOption option = PutOption.newBuilder().build();
 
-    this.getKVClient().put()
+//    this.getKVClient().put()
   }
 
   public void setKey(final String key, final ServiceSpec spec, final String host, final int port,
