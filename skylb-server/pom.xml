@@ -44,6 +44,9 @@
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <github.global.server>github</github.global.server>
+
+        <jetcd.version>0.3.0</jetcd.version>
+        <jcommander.version>1.78</jcommander.version>
     </properties>
 
     <dependencies>
@@ -65,7 +68,14 @@
         <dependency>
             <groupId>io.etcd</groupId>
             <artifactId>jetcd-core</artifactId>
-            <version>0.3.0</version>
+            <version>${jetcd.version}</version>
+        </dependency>
+
+        <!-- JCommander: Command line parsing framework for Java -->
+        <dependency>
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+            <version>${jcommander.version}</version>
         </dependency>
 
         <!-- gRPC + ProtoBuffer -->
@@ -101,6 +111,13 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
+        </dependency>
+
+        <!-- Testing. -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Apache Commons -->
