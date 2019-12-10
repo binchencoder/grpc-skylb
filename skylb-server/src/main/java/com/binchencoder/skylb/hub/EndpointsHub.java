@@ -27,7 +27,7 @@ public interface EndpointsHub {
   /**
    * Inserts or update a service with the given namespace and service name.
    */
-  public void UpsertEndpoint(ServiceSpec spec, String host, String port, Integer weight);
+  public void upsertEndpoint(ServiceSpec spec, String host, String port, Integer weight);
 
   /**
    * Keeps track of dependency graph between clients and services.

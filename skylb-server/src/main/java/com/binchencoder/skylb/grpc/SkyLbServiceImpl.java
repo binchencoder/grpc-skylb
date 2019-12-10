@@ -2,6 +2,7 @@ package com.binchencoder.skylb.grpc;
 
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseRequest;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseResponse;
+import com.binchencoder.skylb.proto.ClientProtos.Operation;
 import com.binchencoder.skylb.proto.ClientProtos.ReportLoadRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ReportLoadResponse;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
@@ -29,5 +30,18 @@ public class SkyLbServiceImpl extends SkylbImplBase {
   public StreamObserver<DiagnoseResponse> attachForDiagnosis(
       StreamObserver<DiagnoseRequest> responseObserver) {
     return super.attachForDiagnosis(responseObserver);
+  }
+
+  private String opToString(Operation op) {
+    switch (op) {
+      case Add:
+        return "ADD";
+      break;
+      case Delete:
+        return "DELETE";
+      break;
+      default:
+        return "";
+    }
   }
 }

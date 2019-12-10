@@ -43,7 +43,7 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   @Override
-  public void UpsertEndpoint(ServiceSpec spec, String host, String port, Integer weight) {
+  public void upsertEndpoint(ServiceSpec spec, String host, String port, Integer weight) {
 
   }
 
