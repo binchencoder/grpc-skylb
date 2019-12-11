@@ -7,8 +7,7 @@ import com.beust.jcommander.Parameters;
 public class EtcdConfig {
 
   @Parameter(names = {"--etcd-endpoints"},
-      description = "The comma separated ETCD endpoints, e.g., http://etcd1:2379,http://etcd2:2379",
-      required = true)
+      description = "The comma separated ETCD endpoints, e.g., http://etcd1:2379,http://etcd2:2379")
   private String endpoints = "http://127.0.0.1:2379";
 
   @Parameter(names = {"--etcd-key-ttl"},

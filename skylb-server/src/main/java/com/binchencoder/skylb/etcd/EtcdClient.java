@@ -23,6 +23,7 @@ import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -33,20 +34,18 @@ public class EtcdClient {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClient.class);
 
-  private final String etcdEndpoints;
-
   private final KV kvClient;
   private final Watch watchClient;
   private final Lease leaseClient;
 
   private final EtcdConfig etcdConfig;
 
-  public EtcdClient(final String etcdEndpoints, final EtcdConfig etcdConfig) {
-    this.etcdEndpoints = etcdEndpoints;
+  public EtcdClient(final EtcdConfig etcdConfig) {
+    Preconditions.checkArgument(!Objects.isNull(etcdConfig), "EtcdConfig should be not null!");
     this.etcdConfig = etcdConfig;
 
     // create client
-    Client client = Client.builder().endpoints(etcdEndpoints).build();
+    Client client = Client.builder().endpoints(etcdConfig.getEndpoints()).build();
     if (null == client) {
       throw new NullPointerException("Etcd client initialization failed.");
     }

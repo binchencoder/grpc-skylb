@@ -143,6 +143,7 @@
                 <scope>provided</scope>
             </dependency>
 
+            <!-- Prometheus -->
             <dependency>
                 <groupId>io.prometheus</groupId>
                 <artifactId>simpleclient</artifactId>

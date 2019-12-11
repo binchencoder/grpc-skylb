@@ -1,5 +1,7 @@
 package com.binchencoder.skylb.grpc;
 
+import com.binchencoder.skylb.etcd.EtcdClient;
+import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseRequest;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseResponse;
 import com.binchencoder.skylb.proto.ClientProtos.Operation;
@@ -12,6 +14,15 @@ import io.grpc.Context;
 import io.grpc.stub.StreamObserver;
 
 public class SkyLbServiceImpl extends SkylbImplBase {
+
+  private final EtcdClient etcdClient;
+
+  private final EndpointsHub endpointsHub;
+
+  public SkyLbServiceImpl(final EtcdClient etcdClient, final EndpointsHub endpointsHub) {
+    this.etcdClient = etcdClient;
+    this.endpointsHub = endpointsHub;
+  }
 
   @Override
   public void resolve(ResolveRequest request, StreamObserver<ResolveResponse> responseObserver) {
