@@ -2,6 +2,10 @@ package com.binchencoder.skylb.hub.model;
 
 import java.util.Formatter;
 
+/**
+ * ServiceEndpoint represents a service endpoint.
+ * (A simplified version of pb.InstanceEndpoint)
+ */
 public class ServiceEndpoint {
 
   private String ip;

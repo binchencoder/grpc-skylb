@@ -1,5 +1,6 @@
 package com.binchencoder.skylb.etcd;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,12 +34,79 @@ public class Endpoints {
    */
   private Set<EndpointSubset> subsets;
 
+  private Map<String, String> labels;
+
+  private String name;
+
+  private String namespace;
+
   public Set<EndpointSubset> getSubsets() {
     return subsets;
   }
 
   public void setSubsets(Set<EndpointSubset> subsets) {
     this.subsets = subsets;
+  }
+
+  public Map<String, String> getLabels() {
+    return labels;
+  }
+
+  public void setLabels(Map<String, String> labels) {
+    this.labels = labels;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getNamespace() {
+    return namespace;
+  }
+
+  public void setNamespace(String namespace) {
+    this.namespace = namespace;
+  }
+
+  public static Builder newBuilder() {
+    return new Endpoints.Builder();
+  }
+
+  public static class Builder {
+
+    private Endpoints DEFAULT_INSTANCE;
+
+    public Builder() {
+      this.DEFAULT_INSTANCE = new Endpoints();
+    }
+
+    public Builder setSubSets(Set<EndpointSubset> subsets) {
+      this.DEFAULT_INSTANCE.setSubsets(subsets);
+      return this;
+    }
+
+    public Builder setLabels(Map<String, String> labels) {
+      this.DEFAULT_INSTANCE.setLabels(labels);
+      return this;
+    }
+
+    public Builder setName(String name) {
+      this.DEFAULT_INSTANCE.setName(name);
+      return this;
+    }
+
+    public Builder setNamespace(String namespace) {
+      this.DEFAULT_INSTANCE.setNamespace(namespace);
+      return this;
+    }
+
+    public Endpoints build() {
+      return this.DEFAULT_INSTANCE;
+    }
   }
 }
 
@@ -103,6 +171,38 @@ class EndpointSubset {
   public void setPorts(Set<EndpointPort> ports) {
     this.ports = ports;
   }
+
+  public static EndpointSubset.Builder newBuilder() {
+    return new EndpointSubset.Builder();
+  }
+
+  public static class Builder {
+
+    private EndpointSubset DEFAULT_INSTANCE;
+
+    public Builder() {
+      this.DEFAULT_INSTANCE = new EndpointSubset();
+    }
+
+    public Builder setAddresses(Set<EndpointAddress> addresses) {
+      this.DEFAULT_INSTANCE.setAddresses(addresses);
+      return this;
+    }
+
+    public Builder setNotReadyAddresses(Set<EndpointAddress> notReadyAddresses) {
+      this.DEFAULT_INSTANCE.setNotReadyAddresses(notReadyAddresses);
+      return this;
+    }
+
+    public Builder setPorts(Set<EndpointPort> ports) {
+      this.DEFAULT_INSTANCE.setPorts(ports);
+      return this;
+    }
+
+    public EndpointSubset build() {
+      return this.DEFAULT_INSTANCE;
+    }
+  }
 }
 
 /**
@@ -131,6 +231,11 @@ class EndpointAddress {
    */
   private String nodeName;
 
+  /**
+   * Reference to object providing the endpoint.
+   */
+  private ObjectReference targetRef;
+
   public String getIp() {
     return ip;
   }
@@ -154,6 +259,51 @@ class EndpointAddress {
   public void setNodeName(String nodeName) {
     this.nodeName = nodeName;
   }
+
+  public ObjectReference getTargetRef() {
+    return targetRef;
+  }
+
+  public void setTargetRef(ObjectReference targetRef) {
+    this.targetRef = targetRef;
+  }
+
+  public static EndpointAddress.Builder newBuilder() {
+    return new EndpointAddress.Builder();
+  }
+
+  public static class Builder {
+
+    private EndpointAddress DEFAULT_INSTANCE;
+
+    public Builder() {
+      this.DEFAULT_INSTANCE = new EndpointAddress();
+    }
+
+    public Builder setIp(String ip) {
+      this.DEFAULT_INSTANCE.setIp(ip);
+      return this;
+    }
+
+    public Builder setHostname(String hostname) {
+      this.DEFAULT_INSTANCE.setHostname(hostname);
+      return this;
+    }
+
+    public Builder setNodeName(String nodeName) {
+      this.DEFAULT_INSTANCE.setNodeName(nodeName);
+      return this;
+    }
+
+    public Builder setTargetRef(ObjectReference targetRef) {
+      this.DEFAULT_INSTANCE.setTargetRef(targetRef);
+      return this;
+    }
+
+    public EndpointAddress build() {
+      return this.DEFAULT_INSTANCE;
+    }
+  }
 }
 
 /**
@@ -171,7 +321,7 @@ class EndpointPort {
   /**
    * The port number of the endpoint.
    */
-  private String port;
+  private int port;
 
   /**
    * The IP protocol for this port.
@@ -188,11 +338,11 @@ class EndpointPort {
     this.name = name;
   }
 
-  public String getPort() {
+  public int getPort() {
     return port;
   }
 
-  public void setPort(String port) {
+  public void setPort(int port) {
     this.port = port;
   }
 
@@ -202,6 +352,38 @@ class EndpointPort {
 
   public void setProtocol(String protocol) {
     this.protocol = protocol;
+  }
+
+  public static EndpointPort.Builder newBuilder() {
+    return new EndpointPort.Builder();
+  }
+
+  public static class Builder {
+
+    private EndpointPort DEFAULT_INSTANCE;
+
+    public Builder() {
+      this.DEFAULT_INSTANCE = new EndpointPort();
+    }
+
+    public Builder setName(String name) {
+      this.DEFAULT_INSTANCE.setName(name);
+      return this;
+    }
+
+    public Builder setPort(int port) {
+      this.DEFAULT_INSTANCE.setPort(port);
+      return this;
+    }
+
+    public Builder setProtocol(String protocol) {
+      this.DEFAULT_INSTANCE.setProtocol(protocol);
+      return this;
+    }
+
+    public EndpointPort build() {
+      return this.DEFAULT_INSTANCE;
+    }
   }
 }
 
@@ -236,5 +418,32 @@ class ObjectReference {
 
   public void setNamespace(String namespace) {
     this.namespace = namespace;
+  }
+
+  public static ObjectReference.Builder newBuilder() {
+    return new ObjectReference.Builder();
+  }
+
+  public static class Builder {
+
+    private ObjectReference DEFAULT_INSTANCE;
+
+    public Builder() {
+      this.DEFAULT_INSTANCE = new ObjectReference();
+    }
+
+    public Builder setKind(String kind) {
+      this.DEFAULT_INSTANCE.setKind(kind);
+      return this;
+    }
+
+    public Builder setNamespace(String namespace) {
+      this.DEFAULT_INSTANCE.setNamespace(namespace);
+      return this;
+    }
+
+    public ObjectReference build() {
+      return this.DEFAULT_INSTANCE;
+    }
   }
 }

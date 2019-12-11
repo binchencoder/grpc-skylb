@@ -36,10 +36,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
     switch (op) {
       case Add:
         return "ADD";
-      break;
       case Delete:
         return "DELETE";
-      break;
       default:
         return "";
     }

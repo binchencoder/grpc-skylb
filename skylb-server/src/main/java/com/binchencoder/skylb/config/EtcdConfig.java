@@ -14,4 +14,12 @@ public class EtcdConfig {
   @Parameter(names = {"--etcd-key-ttl"},
       description = "The etcd key time-to-live in seconds")
   private int etcdKeyTtl = 10;
+
+  public String getEndpoints() {
+    return endpoints;
+  }
+
+  public int getEtcdKeyTtl() {
+    return etcdKeyTtl;
+  }
 }
