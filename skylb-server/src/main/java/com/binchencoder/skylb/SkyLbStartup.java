@@ -45,14 +45,23 @@ public class SkyLbStartup {
     // Parsing the commander the parameters
     EtcdConfig etcdConfig = new EtcdConfig();
     ServerConfig serverConfig = new ServerConfig();
+    parseCommandArgs(args, etcdConfig, serverConfig);
+
+    final SkyLbController controller = new SkyLbController(etcdConfig, serverConfig);
+    return controller;
+  }
+
+  private static void parseCommandArgs(String[] args, EtcdConfig etcdConfig,
+      ServerConfig serverConfig) {
     JCommander commander = JCommander.newBuilder()
         .addObject(etcdConfig)
         .addObject(serverConfig)
         .build();
+    commander.setProgramName("SkyLB", "SkyLB Server");
     commander.parse(args);
-    commander.usage();
-
-    final SkyLbController controller = new SkyLbController(etcdConfig, serverConfig);
-    return controller;
+    if (serverConfig.getHelp()) {
+      commander.usage();
+      System.exit(1);
+    }
   }
 }

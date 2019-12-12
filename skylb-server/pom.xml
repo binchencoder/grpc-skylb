@@ -37,7 +37,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Maven properties -->
-        <maven.test.skip>false</maven.test.skip>
+		<maven.test.skip>true</maven.test.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <!-- Compiler settings properties -->
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -72,6 +72,7 @@
         </dependency>
 
         <!-- JCommander: Command line parsing framework for Java -->
+		<!-- Docs: http://jcommander.org/ -->
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
@@ -123,6 +124,11 @@
             <artifactId>junit</artifactId>
             <scope>compile</scope>
         </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 
         <!-- Apache Commons -->
         <dependency>
@@ -130,8 +136,17 @@
             <artifactId>commons-cli</artifactId>
             <version>1.2</version>
         </dependency>
-    </dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-test</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-test</artifactId>
+		</dependency>
+	</dependencies>
     <build>
+		<finalName>skylb</finalName>
         <extensions>
           <extension>
             <groupId>kr.motd.maven</groupId>
@@ -147,7 +162,28 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<outputDirectory>${basedir}/target</outputDirectory>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<mainClass>com.binchencoder.skylb.SkyLbStartup</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>

@@ -19,6 +19,7 @@ import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.kv.GetResponse;
+import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import java.util.Formatter;
@@ -44,15 +45,17 @@ public class EtcdClient {
     Preconditions.checkArgument(!Objects.isNull(etcdConfig), "EtcdConfig should be not null!");
     this.etcdConfig = etcdConfig;
 
+    LOGGER.info("Initializing the etcd client, etcd-endpoints: {}", etcdConfig.getEndpoints());
     // create client
     Client client = Client.builder().endpoints(etcdConfig.getEndpoints()).build();
-    if (null == client) {
-      throw new NullPointerException("Etcd client initialization failed.");
-    }
+    Preconditions.checkNotNull(client, "Failed to initialized etcd client.");
 
     this.kvClient = client.getKVClient();
+    Preconditions.checkNotNull(kvClient, "Failed to initialized kv client.");
     this.watchClient = client.getWatchClient();
+    Preconditions.checkNotNull(watchClient, "Failed to initialized watch client.");
     this.leaseClient = client.getLeaseClient();
+    Preconditions.checkNotNull(leaseClient, "Failed to initialized lease client.");
   }
 
   private String calculateWeightKey(final String host, final int port) {
@@ -94,8 +97,9 @@ public class EtcdClient {
     }
   }
 
-  public void setKey(final String key, final ServiceSpec spec, final String host, final int port,
-      final int weight) throws ExecutionException, InterruptedException {
+  public CompletableFuture<PutResponse> setKey(final String key, final ServiceSpec spec,
+      final String host, final int port, final int weight)
+      throws ExecutionException, InterruptedException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(key), "Set the key must be not empty.");
 
     Set<EndpointSubset> subsets = Sets.newHashSet(
@@ -126,7 +130,19 @@ public class EtcdClient {
     long leaseID = leaseClient.grant(etcdConfig.getEtcdKeyTtl()).get().getID();
     String json = new Gson().toJson(endpoints);
     LOGGER.info("Etcd set key:{}, value:{} with leaseID[{}]", key, json, leaseID);
-    kvClient.put(ByteSequence.from(key.getBytes()), ByteSequence.from(json.getBytes()),
+    return kvClient.put(ByteSequence.from(key.getBytes()), ByteSequence.from(json.getBytes()),
         PutOption.newBuilder().withLeaseId(leaseID).build());
+  }
+
+  public KV getKvClient() {
+    return kvClient;
+  }
+
+  public Watch getWatchClient() {
+    return watchClient;
+  }
+
+  public Lease getLeaseClient() {
+    return leaseClient;
   }
 }

@@ -67,6 +67,10 @@ public class SkyLbController {
     awaitThread.start();
   }
 
+  public EtcdClient getEtcdClient() {
+    return etcdClient;
+  }
+
   public EtcdConfig getEtcdConfig() {
     return etcdConfig;
   }
