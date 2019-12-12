@@ -1,7 +1,10 @@
 package com.binchencoder.skylb;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
 import com.binchencoder.skylb.config.EtcdConfig;
+import com.binchencoder.skylb.config.LoggerConfig;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.svcutil.ShutdownHookThread;
 import java.util.concurrent.Callable;
@@ -53,15 +56,22 @@ public class SkyLbStartup {
 
   private static void parseCommandArgs(String[] args, EtcdConfig etcdConfig,
       ServerConfig serverConfig) {
+    LoggerConfig loggerConfig = new LoggerConfig();
     JCommander commander = JCommander.newBuilder()
         .addObject(etcdConfig)
         .addObject(serverConfig)
+        .addObject(loggerConfig)
         .build();
     commander.setProgramName("SkyLB", "SkyLB Server");
     commander.parse(args);
     if (serverConfig.getHelp()) {
       commander.usage();
       System.exit(1);
+    }
+
+    if (loggerConfig.hasLoggerLevel()) {
+      LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+      loggerContext.getLogger("root").setLevel(Level.valueOf(loggerConfig.getLoggerLevel()));
     }
   }
 }

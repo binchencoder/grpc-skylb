@@ -2,12 +2,12 @@ package com.binchencoder.skylb.etcd;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.binchencoder.skylb.SkyLbServerInstanceTest;
-import com.binchencoder.skylb.TestUtil;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
+import com.binchencoder.skylb.SkyLbServerInstanceTest;
+import com.binchencoder.skylb.TestUtil;
 import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Before;

@@ -1,5 +1,8 @@
 package com.beust.jcommander;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

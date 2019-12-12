@@ -2,6 +2,9 @@ package com.beust.jcommander;
 
 import static org.junit.Assert.assertEquals;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import org.junit.Before;
