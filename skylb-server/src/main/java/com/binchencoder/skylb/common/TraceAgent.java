@@ -1,7 +1,7 @@
 package com.binchencoder.skylb.common;
 
-import io.opencensus.trace.Span;
 import java.util.List;
+import zipkin2.Span;
 
 public class TraceAgent {
 

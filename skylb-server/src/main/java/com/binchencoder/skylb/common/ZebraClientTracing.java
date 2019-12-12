@@ -1,9 +1,9 @@
 package com.binchencoder.skylb.common;
 
 import com.google.common.base.Stopwatch;
-import io.netty.handler.codec.http2.Http2Connection.Endpoint;
-import io.opencensus.trace.Span;
 import java.util.concurrent.TimeUnit;
+import zipkin2.Endpoint;
+import zipkin2.Span;
 
 public class ZebraClientTracing {
 
@@ -31,11 +31,11 @@ public class ZebraClientTracing {
 //    RpcContext.getContext().get().put(TraceContext.SPAN_ID_KEY, String.valueOf(consumerSpan.id()));
 //    return consumerSpan;
 //  }
-//
-//  public void endTrace(Span span, Stopwatch watch, int code) {
-//    span = span.toBuilder().addAnnotation(System.currentTimeMillis() * 1000, TraceContext.ANNO_CR)
-//        .duration(watch.stop().elapsed(TimeUnit.MICROSECONDS)).putTag("code", code + "").build();
-//    TraceAgent traceAgent = new TraceAgent();
-//    traceAgent.send(TraceContext.getSpans());
-//  }
+
+  public void endTrace(Span span, Stopwatch watch, int code) {
+    span = span.toBuilder().addAnnotation(System.currentTimeMillis() * 1000, TraceContext.ANNO_CR)
+        .duration(watch.stop().elapsed(TimeUnit.MICROSECONDS)).putTag("code", code + "").build();
+    TraceAgent traceAgent = new TraceAgent();
+    traceAgent.send(TraceContext.getSpans());
+  }
 }
