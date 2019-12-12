@@ -10,10 +10,16 @@ import com.binchencoder.skylb.proto.ClientProtos.ReportLoadResponse;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveResponse;
 import com.binchencoder.skylb.proto.SkylbGrpc.SkylbImplBase;
-import io.grpc.Context;
+import com.binchencoder.skylb.utils.GrpcContextUtils;
 import io.grpc.stub.StreamObserver;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SkyLbServiceImpl extends SkylbImplBase {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(SkyLbServiceImpl.class);
 
   private final EtcdClient etcdClient;
 
@@ -28,12 +34,16 @@ public class SkyLbServiceImpl extends SkylbImplBase {
   public void resolve(ResolveRequest request, StreamObserver<ResolveResponse> responseObserver) {
     super.resolve(request, responseObserver);
 
-    Context ctx = Context.current();
+    SocketAddress remoteAddr = GrpcContextUtils.getRemoteAddr();
+    LOGGER.info("Remote ip: {}", remoteAddr.toString());
   }
 
   @Override
   public StreamObserver<ReportLoadRequest> reportLoad(
       StreamObserver<ReportLoadResponse> responseObserver) {
+    String remoteIP = GrpcContextUtils.getRemoteIP();
+    LOGGER.info("Remote ip: {}", remoteIP);
+
     return super.reportLoad(responseObserver);
   }
 

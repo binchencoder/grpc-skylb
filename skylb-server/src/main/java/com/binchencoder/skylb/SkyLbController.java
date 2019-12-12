@@ -1,14 +1,21 @@
 package com.binchencoder.skylb;
 
+import com.beust.jcommander.internal.Lists;
 import com.binchencoder.skylb.config.EtcdConfig;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
 import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsHubImpl;
+import com.binchencoder.skylb.interceptors.HeaderInterceptor;
+import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.ServerInterceptor;
+import io.grpc.ServerInterceptors;
+import io.grpc.ServerServiceDefinition;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +45,10 @@ public class SkyLbController {
 
   public void start() throws IOException {
     final ServerBuilder<?> serverBuilder = ServerBuilder.forPort(serverConfig.getPort());
-    // TODO(chenbin) bind server interceptors
-    serverBuilder.addService(new SkyLbServiceImpl(etcdClient, endpointsHub));
+
+    BindableService srv = new SkyLbServiceImpl(etcdClient, endpointsHub);
+    // Bind server interceptors
+    serverBuilder.addService(this.bindInterceptors(srv.bindService()));
 
     this.server = serverBuilder.build().start();
     this.startDaemonAwaitThread();
@@ -52,19 +61,22 @@ public class SkyLbController {
   }
 
   private void startDaemonAwaitThread() {
-    Thread awaitThread = new Thread() {
-      @Override
-      public void run() {
-        try {
-          SkyLbController.this.server.awaitTermination();
-        } catch (InterruptedException e) {
-          LOGGER.error("gRPC server stopped.", e);
-        }
+    Thread awaitThread = new Thread(() -> {
+      try {
+        SkyLbController.this.server.awaitTermination();
+      } catch (InterruptedException e) {
+        LOGGER.error("gRPC server stopped.", e);
       }
-    };
+    });
 
     awaitThread.setDaemon(false);
     awaitThread.start();
+  }
+
+  // Bind server interceptors
+  private ServerServiceDefinition bindInterceptors(ServerServiceDefinition serviceDefinition) {
+    List<ServerInterceptor> interceptors = Lists.newArrayList(new HeaderInterceptor());
+    return ServerInterceptors.intercept(serviceDefinition, interceptors);
   }
 
   public EtcdClient getEtcdClient() {
