@@ -55,6 +55,17 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 //      TrackServiceGraph
     }
 
+    try {
+      endpointsHub.addObserver(request.getServicesList(), remoteAddr.getHostName(),
+          request.getResolveFullEndpoints());
+    } catch (Exception e) {
+      for (ServiceSpec spec : specs) {
+
+      }
+
+      throw e;
+    }
+
     super.resolve(request, responseObserver);
   }
 

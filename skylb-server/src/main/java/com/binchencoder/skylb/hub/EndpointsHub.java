@@ -5,6 +5,9 @@ import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import java.net.InetAddress;
 import java.util.List;
 
+/**
+ * EndpointsHub defines the service endpoints hub based on etcd.
+ */
 public interface EndpointsHub {
 
   /**

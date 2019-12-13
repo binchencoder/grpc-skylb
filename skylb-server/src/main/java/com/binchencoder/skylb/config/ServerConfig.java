@@ -14,6 +14,10 @@ public class ServerConfig {
       description = "The address to listen on for HTTP requests., e.g., :1920")
   private String scrapeAddr = ":1920";
 
+  @Parameter(names = {"--within-k8s", "-within-k8s"},
+      description = "Whether SkyLB is running in kubernetes")
+  private boolean withInK8s = false;
+
   @Parameter(names = {"--help", "-help", "--h", "-h"},
       description = "Print command line help", help = true)
   private boolean help = false;
@@ -36,5 +40,9 @@ public class ServerConfig {
 
   public boolean getHelp() {
     return help;
+  }
+
+  public boolean isWithInK8s() {
+    return withInK8s;
   }
 }

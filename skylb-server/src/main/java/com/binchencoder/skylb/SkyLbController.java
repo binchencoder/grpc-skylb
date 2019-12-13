@@ -40,7 +40,7 @@ public class SkyLbController {
 
   public boolean initialize() {
     this.etcdClient = new EtcdClient(etcdConfig);
-    this.endpointsHub = new EndpointsHubImpl(etcdClient);
+    this.endpointsHub = new EndpointsHubImpl(etcdClient, serverConfig);
     return true;
   }
 
