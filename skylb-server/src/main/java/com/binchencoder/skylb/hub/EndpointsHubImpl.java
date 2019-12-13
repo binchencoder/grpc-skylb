@@ -1,8 +1,11 @@
 package com.binchencoder.skylb.hub;
 
+import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.hub.model.ClientObject;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.net.InetAddress;
 import java.util.List;
 import org.slf4j.Logger;
@@ -12,11 +15,17 @@ public class EndpointsHubImpl implements EndpointsHub {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EndpointsHubImpl.class);
 
+  private final EtcdClient etcdClient;
+
+  public EndpointsHubImpl(EtcdClient etcdClient) {
+    this.etcdClient = etcdClient;
+  }
+
   @Override
   public EndpointsUpdate addObserver(List<ServiceSpec> specs, String clientAddr,
       Boolean resolveFull) {
     if (null == specs || specs.isEmpty()) {
-      return null;
+      throw new StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(""));
     }
 
     for (ServiceSpec spec : specs) {

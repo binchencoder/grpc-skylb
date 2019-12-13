@@ -8,6 +8,7 @@ import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
 import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsHubImpl;
 import com.binchencoder.skylb.interceptors.HeaderInterceptor;
+import com.binchencoder.skylb.interceptors.HeaderServerInterceptor;
 import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -39,7 +40,7 @@ public class SkyLbController {
 
   public boolean initialize() {
     this.etcdClient = new EtcdClient(etcdConfig);
-    this.endpointsHub = new EndpointsHubImpl();
+    this.endpointsHub = new EndpointsHubImpl(etcdClient);
     return true;
   }
 
@@ -75,7 +76,8 @@ public class SkyLbController {
 
   // Bind server interceptors
   private ServerServiceDefinition bindInterceptors(ServerServiceDefinition serviceDefinition) {
-    List<ServerInterceptor> interceptors = Lists.newArrayList(new HeaderInterceptor());
+    List<ServerInterceptor> interceptors = Lists.newArrayList(HeaderServerInterceptor.instance(),
+        HeaderInterceptor.instance());
     return ServerInterceptors.intercept(serviceDefinition, interceptors);
   }
 

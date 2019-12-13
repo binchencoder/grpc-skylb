@@ -1,4 +1,4 @@
-package com.binchencoder.skylb.common;
+package com.binchencoder.skylb.trace;
 
 import java.util.List;
 import zipkin2.Span;

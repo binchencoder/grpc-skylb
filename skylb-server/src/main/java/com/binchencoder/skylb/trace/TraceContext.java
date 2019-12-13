@@ -1,4 +1,4 @@
-package com.binchencoder.skylb.common;
+package com.binchencoder.skylb.trace;
 
 import java.util.ArrayList;
 import java.util.List;

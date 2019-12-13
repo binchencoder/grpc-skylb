@@ -1,4 +1,4 @@
-package com.binchencoder.skylb.common;
+package com.binchencoder.skylb.trace;
 
 import com.google.common.collect.Sets;
 import java.util.HashMap;
@@ -16,8 +16,8 @@ public class RpcContext {
     }
   };
 
-  private final Map<String, String> attachments = new HashMap<String, String>();
-  private final Map<String, Object> values = new HashMap<String, Object>();
+  private final Map<String, String> attachments = new HashMap();
+  private final Map<String, Object> values = new HashMap();
   private final Set<Class> validatorGroup = Sets.newHashSet();
 
   public static RpcContext getContext() {
@@ -30,7 +30,6 @@ public class RpcContext {
 
   private RpcContext() {
   }
-
 
   public RpcContext setHoldenGroups(Set<Class> groups) {
     if (groups != null && groups.size() > 0) {

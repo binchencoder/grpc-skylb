@@ -111,7 +111,7 @@ public class Endpoints {
 }
 
 /**
- * EndpointSubset is a group of addresses with a common set of ports. The expanded set of endpoints
+ * EndpointSubset is a group of addresses with a trace set of ports. The expanded set of endpoints
  * is the Cartesian product of Addresses x Ports.
  *
  * <pre>

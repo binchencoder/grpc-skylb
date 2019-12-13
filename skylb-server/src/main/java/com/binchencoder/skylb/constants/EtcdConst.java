@@ -1,6 +1,6 @@
 package com.binchencoder.skylb.constants;
 
-public class EtcdConst {
+public final class EtcdConst {
 
   public static final String SEPARATOR = "/";
 

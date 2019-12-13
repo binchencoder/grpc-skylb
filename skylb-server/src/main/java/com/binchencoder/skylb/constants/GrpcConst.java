@@ -4,9 +4,6 @@ import io.grpc.Metadata;
 
 public final class GrpcConst {
 
-  private GrpcConst() {
-  }
-
   /**
    * Metadata key of 'x-forwarded-for'
    */

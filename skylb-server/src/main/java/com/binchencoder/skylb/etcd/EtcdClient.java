@@ -50,6 +50,8 @@ public class EtcdClient {
     Client client = Client.builder().endpoints(etcdConfig.getEndpoints()).build();
     Preconditions.checkNotNull(client, "Failed to initialized etcd client.");
 
+    // TODO(chenbin) 检查client是否连接成功
+
     this.kvClient = client.getKVClient();
     Preconditions.checkNotNull(kvClient, "Failed to initialized kv client.");
     this.watchClient = client.getWatchClient();

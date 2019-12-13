@@ -30,9 +30,6 @@ public class GrpcContextUtils {
     // 访问用户IP
     private String remoteIP;
 
-    // 用户来源
-    private String source;
-
     // 远程访问地址
     private SocketAddress remoteAddr;
 
@@ -42,14 +39,6 @@ public class GrpcContextUtils {
 
     public void setRemoteIP(String remoteIP) {
       this.remoteIP = remoteIP;
-    }
-
-    public String getSource() {
-      return source;
-    }
-
-    public void setSource(String source) {
-      this.source = source;
     }
 
     public SocketAddress getRemoteAddr() {
@@ -74,11 +63,6 @@ public class GrpcContextUtils {
 
       public Builder setRemoteIP(String remoteIP) {
         this.DEFAULT_INSTANCE.setRemoteIP(remoteIP);
-        return this;
-      }
-
-      public Builder setSource(String source) {
-        this.DEFAULT_INSTANCE.setSource(source);
         return this;
       }
 

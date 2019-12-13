@@ -3,7 +3,6 @@ package com.binchencoder.skylb.interceptors;
 import static com.binchencoder.skylb.constants.GrpcConst.REMOTE_IP_KEY;
 
 import com.binchencoder.skylb.utils.GrpcContextUtils.ContextEntity;
-import io.grpc.Attributes;
 import io.grpc.Context;
 import io.grpc.Contexts;
 import io.grpc.Grpc;
@@ -22,6 +21,13 @@ public class HeaderInterceptor implements ServerInterceptor {
 
   public static final Context.Key<ContextEntity> CONTEXT_VAL_ENTITY_KEY =
       Context.key("contextValueEntity");
+
+  public static ServerInterceptor instance() {
+    return new HeaderInterceptor();
+  }
+
+  private HeaderInterceptor() {
+  }
 
   @Override
   public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
