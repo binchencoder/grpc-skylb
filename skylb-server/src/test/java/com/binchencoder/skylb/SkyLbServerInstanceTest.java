@@ -18,7 +18,7 @@ public class SkyLbServerInstanceTest {
     serverConfig.setPort(9876);
     etcdConfig.setEndpoints("http://192.168.47.16:2377");
 
-    skyLbController = new SkyLbController(etcdConfig, serverConfig);
+    skyLbController = new SkyLbController(serverConfig);
     boolean initResult = skyLbController.initialize();
     assertTrue(initResult);
 

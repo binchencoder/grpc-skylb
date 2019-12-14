@@ -3,9 +3,10 @@ package com.binchencoder.skylb;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
-import com.binchencoder.skylb.config.EtcdConfig;
 import com.binchencoder.skylb.config.LoggerConfig;
 import com.binchencoder.skylb.config.ServerConfig;
+import com.binchencoder.skylb.etcd.EtcdClient;
+import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
 import com.binchencoder.skylb.svcutil.ShutdownHookThread;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ public class SkyLbStartup {
 
     Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(LOGGER, new Callable<Void>() {
       @Override
-      public Void call() throws Exception {
+      public Void call() {
         controller.shutdown();
         return null;
       }
@@ -46,21 +47,20 @@ public class SkyLbStartup {
 
   private static SkyLbController createSkyLbController(String[] args) {
     // Parsing the commander the parameters
-    EtcdConfig etcdConfig = new EtcdConfig();
     ServerConfig serverConfig = new ServerConfig();
-    parseCommandArgs(args, etcdConfig, serverConfig);
+    parseCommandArgs(args, serverConfig);
 
-    final SkyLbController controller = new SkyLbController(etcdConfig, serverConfig);
+    final SkyLbController controller = new SkyLbController(serverConfig);
     return controller;
   }
 
-  private static void parseCommandArgs(String[] args, EtcdConfig etcdConfig,
-      ServerConfig serverConfig) {
+  private static void parseCommandArgs(String[] args, ServerConfig serverConfig) {
     LoggerConfig loggerConfig = new LoggerConfig();
     JCommander commander = JCommander.newBuilder()
-        .addObject(etcdConfig)
+        .addObject(EtcdClient.etcdConfig)
         .addObject(serverConfig)
         .addObject(loggerConfig)
+        .addObject(SkyLbServiceImpl.config)
         .build();
     commander.setProgramName("SkyLB", "SkyLB Server");
     commander.parse(args);

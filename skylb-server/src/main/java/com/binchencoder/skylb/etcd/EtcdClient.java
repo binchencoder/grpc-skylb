@@ -2,8 +2,9 @@ package com.binchencoder.skylb.etcd;
 
 import static com.binchencoder.skylb.constants.EtcdConst.SEPARATOR;
 
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
-import com.binchencoder.skylb.config.EtcdConfig;
 import com.binchencoder.skylb.constants.EtcdConst;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import com.google.common.base.Preconditions;
@@ -24,7 +25,6 @@ import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import java.util.Formatter;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -39,11 +39,10 @@ public class EtcdClient {
   private final Watch watchClient;
   private final Lease leaseClient;
 
-  private final EtcdConfig etcdConfig;
+  public static EtcdConfig etcdConfig = new EtcdConfig();
 
-  public EtcdClient(final EtcdConfig etcdConfig) {
-    Preconditions.checkArgument(!Objects.isNull(etcdConfig), "EtcdConfig should be not null!");
-    this.etcdConfig = etcdConfig;
+  public EtcdClient() {
+//    Preconditions.checkArgument(!Objects.isNull(etcdConfig), "EtcdConfig should be not null!");
 
     LOGGER.info("Initializing the etcd client, etcd-endpoints: {}", etcdConfig.getEndpoints());
     // create client
@@ -81,7 +80,8 @@ public class EtcdClient {
   }
 
   public void refreshKey(final String key) throws ExecutionException, InterruptedException {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(key), "Refresh the key should not be empty.");
+    Preconditions
+        .checkArgument(!Strings.isNullOrEmpty(key), "Refresh the key should not be empty.");
     LOGGER.info("Refresh the key[{}] with ttl[{}]", key, etcdConfig.getEtcdKeyTtl());
 
     ByteSequence byteKey = ByteSequence.from(key.getBytes());
@@ -146,5 +146,33 @@ public class EtcdClient {
 
   public Lease getLeaseClient() {
     return leaseClient;
+  }
+
+  @Parameters(separators = "=")
+  public static class EtcdConfig {
+
+    @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},
+        description = "The comma separated ETCD endpoints, e.g., http://etcd1:2379,http://etcd2:2379")
+    private String endpoints = "http://127.0.0.1:2379";
+
+    @Parameter(names = {"--etcd-key-ttl", "-etcd-key-ttl"},
+        description = "The etcd key time-to-live in seconds")
+    private int etcdKeyTtl = 10;
+
+    public String getEndpoints() {
+      return endpoints;
+    }
+
+    public void setEndpoints(String endpoints) {
+      this.endpoints = endpoints;
+    }
+
+    public int getEtcdKeyTtl() {
+      return etcdKeyTtl;
+    }
+
+    public void setEtcdKeyTtl(int etcdKeyTtl) {
+      this.etcdKeyTtl = etcdKeyTtl;
+    }
   }
 }
