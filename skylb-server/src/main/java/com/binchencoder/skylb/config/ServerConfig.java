@@ -18,6 +18,10 @@ public class ServerConfig {
       description = "Whether SkyLB is running in kubernetes")
   private boolean withInK8s = false;
 
+  @Parameter(names = {"--auto-rectify-interval", "-auto-rectify-interval"},
+      description = "The interval of auto rectification in seconds.")
+  private int autoRectifyInterval = 60;
+
   @Parameter(names = {"--help", "-help", "--h", "-h"},
       description = "Print command line help", help = true)
   private boolean help = false;
@@ -38,11 +42,15 @@ public class ServerConfig {
     this.scrapeAddr = scrapeAddr;
   }
 
-  public boolean getHelp() {
-    return help;
-  }
-
   public boolean isWithInK8s() {
     return withInK8s;
+  }
+
+  public int getAutoRectifyInterval() {
+    return autoRectifyInterval;
+  }
+
+  public boolean getHelp() {
+    return help;
   }
 }

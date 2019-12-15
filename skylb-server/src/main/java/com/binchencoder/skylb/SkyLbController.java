@@ -1,6 +1,7 @@
 package com.binchencoder.skylb;
 
 import com.beust.jcommander.internal.Lists;
+import com.binchencoder.skylb.common.GoChannelPool;
 import com.binchencoder.skylb.common.ThreadFactoryImpl;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
@@ -33,6 +34,9 @@ public class SkyLbController {
 
   private Server server;
 
+  private ExecutorService endpointExecutor;
+  private GoChannelPool channelPool;
+
   private ExecutorService serviceGraphExecutor;
 
   public SkyLbController(ServerConfig serverConfig) {
@@ -41,17 +45,22 @@ public class SkyLbController {
 
   public boolean initialize() {
     this.etcdClient = new EtcdClient();
-    this.endpointsHub = new EndpointsHubImpl(etcdClient, serverConfig);
-
+    this.endpointExecutor = Executors
+        .newCachedThreadPool(new ThreadFactoryImpl("EndpointExecutorThread_"));
     this.serviceGraphExecutor = Executors
         .newSingleThreadExecutor(new ThreadFactoryImpl("ServiceGraphExecutorThread_"));
+    this.channelPool = GoChannelPool.getDefaultInstance();
+
+    EndpointsHubImpl endpointsHubImpl = new EndpointsHubImpl(etcdClient, serverConfig, channelPool);
+    endpointsHubImpl.registerProcessor(endpointExecutor);
+    this.endpointsHub = endpointsHubImpl;
 
     return true;
   }
 
   public void start() throws IOException {
     SkyLbServiceImpl skyLbService = new SkyLbServiceImpl(etcdClient, endpointsHub);
-    skyLbService.registerProcessor(serviceGraphExecutor);
+    skyLbService.registerProcessor(endpointExecutor);
 
     // Bind server interceptors
     final ServerBuilder<?> serverBuilder = ServerBuilder.forPort(serverConfig.getPort());
@@ -63,6 +72,9 @@ public class SkyLbController {
 
   public void shutdown() {
     LOGGER.info("Shutting down gRPC server ...");
+
+    Optional.ofNullable(endpointExecutor).ifPresent(ExecutorService::shutdown);
+    LOGGER.info("Shutting down endpointExecutor ...");
 
     Optional.ofNullable(serviceGraphExecutor).ifPresent(ExecutorService::shutdown);
     LOGGER.info("Shutting down serviceGraphExecutor ...");

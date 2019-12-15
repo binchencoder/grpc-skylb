@@ -23,6 +23,8 @@ import java.util.Set;
  */
 public class Endpoints {
 
+  private static final Endpoints DEFAULT_INSTANCE = new Endpoints();
+
   /**
    * The set of all endpoints is the union of all subsets. Addresses are placed into subsets
    * according to the IPs they share. A single address with multiple ports, some of which are ready
@@ -76,6 +78,10 @@ public class Endpoints {
     return new Endpoints.Builder();
   }
 
+  public static Endpoints getDefaultInstance() {
+    return DEFAULT_INSTANCE;
+  }
+
   public static class Builder {
 
     private Endpoints DEFAULT_INSTANCE;
@@ -108,281 +114,281 @@ public class Endpoints {
       return this.DEFAULT_INSTANCE;
     }
   }
-}
-
-/**
- * EndpointSubset is a group of addresses with a trace set of ports. The expanded set of endpoints
- * is the Cartesian product of Addresses x Ports.
- *
- * <pre>
- * For example, given:
- *   {
- *     Addresses: [{"ip": "10.10.1.1"}, {"ip": "10.10.2.2"}],
- *     Ports:     [{"name": "a", "port": 8675}, {"name": "b", "port": 309}]
- *   }
- *
- * The resulting set of endpoints can be viewed as:
- *     a: [ 10.10.1.1:8675, 10.10.2.2:8675 ],
- *     b: [ 10.10.1.1:309, 10.10.2.2:309 ]
- *
- * </pre>
- */
-class EndpointSubset {
 
   /**
-   * IP addresses which offer the related ports that are marked as ready. These endpoints should be
-   * considered safe for load balancers and clients to utilize.
-   */
-  private Set<EndpointAddress> addresses;
-
-  /**
-   * IP addresses which offer the related ports but are not currently marked as ready because they
-   * have not yet finished starting, have recently failed a readiness check, or have recently failed
-   * a liveness check.
-   */
-  private Set<EndpointAddress> notReadyAddresses;
-
-  /**
-   * Port numbers available on the related IP addresses.
-   */
-  private Set<EndpointPort> ports;
-
-  public Set<EndpointAddress> getAddresses() {
-    return addresses;
-  }
-
-  public void setAddresses(Set<EndpointAddress> addresses) {
-    this.addresses = addresses;
-  }
-
-  public Set<EndpointAddress> getNotReadyAddresses() {
-    return notReadyAddresses;
-  }
-
-  public void setNotReadyAddresses(
-      Set<EndpointAddress> notReadyAddresses) {
-    this.notReadyAddresses = notReadyAddresses;
-  }
-
-  public Set<EndpointPort> getPorts() {
-    return ports;
-  }
-
-  public void setPorts(Set<EndpointPort> ports) {
-    this.ports = ports;
-  }
-
-  public static EndpointSubset.Builder newBuilder() {
-    return new EndpointSubset.Builder();
-  }
-
-  public static class Builder {
-
-    private EndpointSubset DEFAULT_INSTANCE;
-
-    public Builder() {
-      this.DEFAULT_INSTANCE = new EndpointSubset();
-    }
-
-    public Builder setAddresses(Set<EndpointAddress> addresses) {
-      this.DEFAULT_INSTANCE.setAddresses(addresses);
-      return this;
-    }
-
-    public Builder setNotReadyAddresses(Set<EndpointAddress> notReadyAddresses) {
-      this.DEFAULT_INSTANCE.setNotReadyAddresses(notReadyAddresses);
-      return this;
-    }
-
-    public Builder setPorts(Set<EndpointPort> ports) {
-      this.DEFAULT_INSTANCE.setPorts(ports);
-      return this;
-    }
-
-    public EndpointSubset build() {
-      return this.DEFAULT_INSTANCE;
-    }
-  }
-}
-
-/**
- * EndpointAddress is a tuple that describes single IP address.
- */
-class EndpointAddress {
-
-  /**
-   * The IP of this endpoint.
+   * EndpointSubset is a group of addresses with a trace set of ports. The expanded set of endpoints
+   * is the Cartesian product of Addresses x Ports.
    *
-   * May not be loopback (127.0.0.0/8), link-local (169.254.0.0/16), or link-local multicast
-   * ((224.0.0.0/24).
+   * <pre>
+   * For example, given:
+   *   {
+   *     Addresses: [{"ip": "10.10.1.1"}, {"ip": "10.10.2.2"}],
+   *     Ports:     [{"name": "a", "port": 8675}, {"name": "b", "port": 309}]
+   *   }
    *
-   * IPv6 is also accepted but not fully supported on all platforms. Also, certain kubernetes
-   * components, like kube-proxy, are not IPv6 ready.
-   */
-  private String ip;
-
-  /**
-   * The Hostname of this endpoint.
-   */
-  private String hostname;
-
-  /**
-   * Node hosting this endpoint. This can be used to determine endpoints local to a node.
-   */
-  private String nodeName;
-
-  /**
-   * Reference to object providing the endpoint.
-   */
-  private ObjectReference targetRef;
-
-  public String getIp() {
-    return ip;
-  }
-
-  public void setIp(String ip) {
-    this.ip = ip;
-  }
-
-  public String getHostname() {
-    return hostname;
-  }
-
-  public void setHostname(String hostname) {
-    this.hostname = hostname;
-  }
-
-  public String getNodeName() {
-    return nodeName;
-  }
-
-  public void setNodeName(String nodeName) {
-    this.nodeName = nodeName;
-  }
-
-  public ObjectReference getTargetRef() {
-    return targetRef;
-  }
-
-  public void setTargetRef(ObjectReference targetRef) {
-    this.targetRef = targetRef;
-  }
-
-  public static EndpointAddress.Builder newBuilder() {
-    return new EndpointAddress.Builder();
-  }
-
-  public static class Builder {
-
-    private EndpointAddress DEFAULT_INSTANCE;
-
-    public Builder() {
-      this.DEFAULT_INSTANCE = new EndpointAddress();
-    }
-
-    public Builder setIp(String ip) {
-      this.DEFAULT_INSTANCE.setIp(ip);
-      return this;
-    }
-
-    public Builder setHostname(String hostname) {
-      this.DEFAULT_INSTANCE.setHostname(hostname);
-      return this;
-    }
-
-    public Builder setNodeName(String nodeName) {
-      this.DEFAULT_INSTANCE.setNodeName(nodeName);
-      return this;
-    }
-
-    public Builder setTargetRef(ObjectReference targetRef) {
-      this.DEFAULT_INSTANCE.setTargetRef(targetRef);
-      return this;
-    }
-
-    public EndpointAddress build() {
-      return this.DEFAULT_INSTANCE;
-    }
-  }
-}
-
-/**
- * a tuple that describes a single port.
- */
-class EndpointPort {
-
-  /**
-   * The name of this port (corresponds to ServicePort.Name).
+   * The resulting set of endpoints can be viewed as:
+   *     a: [ 10.10.1.1:8675, 10.10.2.2:8675 ],
+   *     b: [ 10.10.1.1:309, 10.10.2.2:309 ]
    *
-   * Must be a DNS_LABEL. Optional only if one port is defined.
+   * </pre>
    */
-  private String name;
+  public static class EndpointSubset {
+
+    /**
+     * IP addresses which offer the related ports that are marked as ready. These endpoints should
+     * be considered safe for load balancers and clients to utilize.
+     */
+    private Set<EndpointAddress> addresses;
+
+    /**
+     * IP addresses which offer the related ports but are not currently marked as ready because they
+     * have not yet finished starting, have recently failed a readiness check, or have recently
+     * failed a liveness check.
+     */
+    private Set<EndpointAddress> notReadyAddresses;
+
+    /**
+     * Port numbers available on the related IP addresses.
+     */
+    private Set<EndpointPort> ports;
+
+    public Set<EndpointAddress> getAddresses() {
+      return addresses;
+    }
+
+    public void setAddresses(Set<EndpointAddress> addresses) {
+      this.addresses = addresses;
+    }
+
+    public Set<EndpointAddress> getNotReadyAddresses() {
+      return notReadyAddresses;
+    }
+
+    public void setNotReadyAddresses(
+        Set<EndpointAddress> notReadyAddresses) {
+      this.notReadyAddresses = notReadyAddresses;
+    }
+
+    public Set<EndpointPort> getPorts() {
+      return ports;
+    }
+
+    public void setPorts(Set<EndpointPort> ports) {
+      this.ports = ports;
+    }
+
+    public static EndpointSubset.Builder newBuilder() {
+      return new EndpointSubset.Builder();
+    }
+
+    public static class Builder {
+
+      private EndpointSubset DEFAULT_INSTANCE;
+
+      public Builder() {
+        this.DEFAULT_INSTANCE = new EndpointSubset();
+      }
+
+      public Builder setAddresses(Set<EndpointAddress> addresses) {
+        this.DEFAULT_INSTANCE.setAddresses(addresses);
+        return this;
+      }
+
+      public Builder setNotReadyAddresses(Set<EndpointAddress> notReadyAddresses) {
+        this.DEFAULT_INSTANCE.setNotReadyAddresses(notReadyAddresses);
+        return this;
+      }
+
+      public Builder setPorts(Set<EndpointPort> ports) {
+        this.DEFAULT_INSTANCE.setPorts(ports);
+        return this;
+      }
+
+      public EndpointSubset build() {
+        return this.DEFAULT_INSTANCE;
+      }
+    }
+
+    /**
+     * EndpointAddress is a tuple that describes single IP address.
+     */
+    public static class EndpointAddress {
+
+      /**
+       * The IP of this endpoint.
+       *
+       * May not be loopback (127.0.0.0/8), link-local (169.254.0.0/16), or link-local multicast
+       * ((224.0.0.0/24).
+       *
+       * IPv6 is also accepted but not fully supported on all platforms. Also, certain kubernetes
+       * components, like kube-proxy, are not IPv6 ready.
+       */
+      private String ip;
+
+      /**
+       * The Hostname of this endpoint.
+       */
+      private String hostname;
+
+      /**
+       * Node hosting this endpoint. This can be used to determine endpoints local to a node.
+       */
+      private String nodeName;
+
+      /**
+       * Reference to object providing the endpoint.
+       */
+      private ObjectReference targetRef;
+
+      public String getIp() {
+        return ip;
+      }
+
+      public void setIp(String ip) {
+        this.ip = ip;
+      }
+
+      public String getHostname() {
+        return hostname;
+      }
+
+      public void setHostname(String hostname) {
+        this.hostname = hostname;
+      }
+
+      public String getNodeName() {
+        return nodeName;
+      }
+
+      public void setNodeName(String nodeName) {
+        this.nodeName = nodeName;
+      }
+
+      public ObjectReference getTargetRef() {
+        return targetRef;
+      }
+
+      public void setTargetRef(ObjectReference targetRef) {
+        this.targetRef = targetRef;
+      }
+
+      public static EndpointAddress.Builder newBuilder() {
+        return new EndpointAddress.Builder();
+      }
+
+      public static class Builder {
+
+        private EndpointAddress DEFAULT_INSTANCE;
+
+        public Builder() {
+          this.DEFAULT_INSTANCE = new EndpointAddress();
+        }
+
+        public Builder setIp(String ip) {
+          this.DEFAULT_INSTANCE.setIp(ip);
+          return this;
+        }
+
+        public Builder setHostname(String hostname) {
+          this.DEFAULT_INSTANCE.setHostname(hostname);
+          return this;
+        }
+
+        public Builder setNodeName(String nodeName) {
+          this.DEFAULT_INSTANCE.setNodeName(nodeName);
+          return this;
+        }
+
+        public Builder setTargetRef(ObjectReference targetRef) {
+          this.DEFAULT_INSTANCE.setTargetRef(targetRef);
+          return this;
+        }
+
+        public EndpointAddress build() {
+          return this.DEFAULT_INSTANCE;
+        }
+      }
+    }
+  }
 
   /**
-   * The port number of the endpoint.
+   * a tuple that describes a single port.
    */
-  private int port;
+  public static class EndpointPort {
 
-  /**
-   * The IP protocol for this port.
-   *
-   * Must be UDP or TCP. Default is TCP.
-   */
-  private String protocol;
+    /**
+     * The name of this port (corresponds to ServicePort.Name).
+     *
+     * Must be a DNS_LABEL. Optional only if one port is defined.
+     */
+    private String name;
 
-  public String getName() {
-    return name;
-  }
+    /**
+     * The port number of the endpoint.
+     */
+    private int port;
 
-  public void setName(String name) {
-    this.name = name;
-  }
+    /**
+     * The IP protocol for this port.
+     *
+     * Must be UDP or TCP. Default is TCP.
+     */
+    private String protocol;
 
-  public int getPort() {
-    return port;
-  }
-
-  public void setPort(int port) {
-    this.port = port;
-  }
-
-  public String getProtocol() {
-    return protocol;
-  }
-
-  public void setProtocol(String protocol) {
-    this.protocol = protocol;
-  }
-
-  public static EndpointPort.Builder newBuilder() {
-    return new EndpointPort.Builder();
-  }
-
-  public static class Builder {
-
-    private EndpointPort DEFAULT_INSTANCE;
-
-    public Builder() {
-      this.DEFAULT_INSTANCE = new EndpointPort();
+    public String getName() {
+      return name;
     }
 
-    public Builder setName(String name) {
-      this.DEFAULT_INSTANCE.setName(name);
-      return this;
+    public void setName(String name) {
+      this.name = name;
     }
 
-    public Builder setPort(int port) {
-      this.DEFAULT_INSTANCE.setPort(port);
-      return this;
+    public int getPort() {
+      return port;
     }
 
-    public Builder setProtocol(String protocol) {
-      this.DEFAULT_INSTANCE.setProtocol(protocol);
-      return this;
+    public void setPort(int port) {
+      this.port = port;
     }
 
-    public EndpointPort build() {
-      return this.DEFAULT_INSTANCE;
+    public String getProtocol() {
+      return protocol;
+    }
+
+    public void setProtocol(String protocol) {
+      this.protocol = protocol;
+    }
+
+    public static EndpointPort.Builder newBuilder() {
+      return new EndpointPort.Builder();
+    }
+
+    public static class Builder {
+
+      private EndpointPort DEFAULT_INSTANCE;
+
+      public Builder() {
+        this.DEFAULT_INSTANCE = new EndpointPort();
+      }
+
+      public Builder setName(String name) {
+        this.DEFAULT_INSTANCE.setName(name);
+        return this;
+      }
+
+      public Builder setPort(int port) {
+        this.DEFAULT_INSTANCE.setPort(port);
+        return this;
+      }
+
+      public Builder setProtocol(String protocol) {
+        this.DEFAULT_INSTANCE.setProtocol(protocol);
+        return this;
+      }
+
+      public EndpointPort build() {
+        return this.DEFAULT_INSTANCE;
+      }
     }
   }
 }

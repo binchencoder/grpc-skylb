@@ -1,5 +1,6 @@
 package com.binchencoder.skylb.hub;
 
+import com.binchencoder.skylb.common.GoChannelPool.GoChannel;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import java.net.SocketAddress;
@@ -10,11 +11,13 @@ import java.util.List;
  */
 public interface EndpointsHub {
 
+  int ChanCapMultiplication = 10;
+
   /**
    * Adds an observer of the given service specs for the given clientAddr. When service endpoints
    * changed, it notifies the observer through the returned channel.
    */
-  EndpointsUpdate addObserver(List<ServiceSpec> specs, String clientAddr,
+  GoChannel<EndpointsUpdate> addObserver(List<ServiceSpec> specs, String clientAddr,
       Boolean resolveFull);
 
   /**

@@ -1,5 +1,6 @@
 package com.binchencoder.skylb.hub.model;
 
+import com.binchencoder.skylb.common.GoChannelPool.GoChannel;
 import com.binchencoder.skylb.hub.EndpointsUpdate;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 
@@ -11,7 +12,7 @@ public class ClientObject {
 
   private Boolean resolveFull;
 
-  private EndpointsUpdate endpointsUpdate;
+  private GoChannel<EndpointsUpdate> notifyChannel;
 
   public ServiceSpec getServiceSpec() {
     return serviceSpec;
@@ -37,11 +38,11 @@ public class ClientObject {
     this.resolveFull = resolveFull;
   }
 
-  public EndpointsUpdate getEndpointsUpdate() {
-    return endpointsUpdate;
+  public GoChannel<EndpointsUpdate> getNotifyChannel() {
+    return notifyChannel;
   }
 
-  public void setEndpointsUpdate(EndpointsUpdate endpointsUpdate) {
-    this.endpointsUpdate = endpointsUpdate;
+  public void setNotifyChannel(GoChannel<EndpointsUpdate> notifyChannel) {
+    this.notifyChannel = notifyChannel;
   }
 }

@@ -119,17 +119,17 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       .buckets(0, 0.1, 10)
       .register();
 
+  public static Config config = new Config();
+
   private final EtcdClient etcdClient;
   private final EndpointsHub endpointsHub;
-
-  private ExecutorService serviceGraphExecutor;
-
-  public static Config config = new Config();
 
   public SkyLbServiceImpl(final EtcdClient etcdClient, final EndpointsHub endpointsHub) {
     this.etcdClient = etcdClient;
     this.endpointsHub = endpointsHub;
   }
+
+  private ExecutorService serviceGraphExecutor;
 
   public void registerProcessor(ExecutorService serviceGraphExecutor) {
     this.serviceGraphExecutor = serviceGraphExecutor;
@@ -153,14 +153,13 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           Status.INVALID_ARGUMENT.withDescription("No service spec found.."));
     }
 
-    try {
-      for (ServiceSpec spec : specs) {
-        endpointsHub.trackServiceGraph(request, spec, remoteAddr);
-      }
+    for (ServiceSpec spec : specs) {
+      endpointsHub.trackServiceGraph(request, spec, remoteAddr);
+    }
 
+    try {
       try {
-        endpointsHub.addObserver(request.getServicesList(), remoteAddr.getHostName(),
-            request.getResolveFullEndpoints());
+        endpointsHub.addObserver(specs, remoteAddr.getHostName(), request.getResolveFullEndpoints());
       } catch (Exception e) {
         for (ServiceSpec spec : specs) {
           addObserverFailCounts

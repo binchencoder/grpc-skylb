@@ -3,16 +3,23 @@ package com.binchencoder.skylb.hub.model;
 import java.util.Formatter;
 
 /**
- * ServiceEndpoint represents a service endpoint.
- * (A simplified version of pb.InstanceEndpoint)
+ * ServiceEndpoint represents a service endpoint. (A simplified version of pb.InstanceEndpoint)
  */
 public class ServiceEndpoint {
 
   private String ip;
 
-  private Integer port;
+  private int port;
 
-  private Integer weight;
+  private int weight;
+
+  public ServiceEndpoint() {
+  }
+
+  public ServiceEndpoint(String ip, int port) {
+    this.ip = ip;
+    this.port = port;
+  }
 
   public String getIp() {
     return ip;
@@ -22,19 +29,19 @@ public class ServiceEndpoint {
     this.ip = ip;
   }
 
-  public Integer getPort() {
+  public int getPort() {
     return port;
   }
 
-  public void setPort(Integer port) {
+  public void setPort(int port) {
     this.port = port;
   }
 
-  public Integer getWeight() {
+  public int getWeight() {
     return weight;
   }
 
-  public void setWeight(Integer weight) {
+  public void setWeight(int weight) {
     this.weight = weight;
   }
 

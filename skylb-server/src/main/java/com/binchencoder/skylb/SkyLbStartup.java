@@ -24,12 +24,9 @@ public class SkyLbStartup {
       System.exit(-3);
     }
 
-    Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(LOGGER, new Callable<Void>() {
-      @Override
-      public Void call() {
-        controller.shutdown();
-        return null;
-      }
+    Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(LOGGER, (Callable<Void>) () -> {
+      controller.shutdown();
+      return null;
     }));
 
     try {

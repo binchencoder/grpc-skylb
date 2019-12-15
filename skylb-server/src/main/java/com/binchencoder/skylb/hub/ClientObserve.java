@@ -1,22 +1,23 @@
 package com.binchencoder.skylb.hub;
 
+import com.binchencoder.skylb.hub.model.ClientObserver;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceEndpoints;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 
 /**
- * ClientObserver defines the interface of a client observer.
+ * ClientObserve defines the interface of a client observer for a gRPC service.
  */
-public interface ClientObserver {
+public interface ClientObserve {
 
   /**
    * ClientAddr returns the client address of a client observer.
    */
-  String clientAddr();
+  String clientAddr(ClientObserver observer);
 
   /**
    * Spec returns the spec of the service.
    */
-  ServiceSpec spec();
+  ServiceSpec spec(ClientObserver observer);
 
   /**
    * Notify notifies the client observer of the given service endpoints.
@@ -26,5 +27,5 @@ public interface ClientObserver {
   /**
    * Close closes the client observer.
    */
-  void close();
+  void close(ClientObserver observer);
 }

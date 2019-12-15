@@ -19,6 +19,12 @@ public class GoChannelPool {
     return channel;
   }
 
+  public <T> GoChannel<T> newChannel(int capacityDeq) {
+    GoChannel<T> channel = new GoChannel<>(capacityDeq);
+    channelWeakHashMap.put(channel.getId(), new WeakReference<>(channel));
+    return channel;
+  }
+
   public void select(GoSelectConsumer consumer) throws InterruptedException {
     consumer.accept(getTotalQueue().take());
   }
@@ -63,11 +69,11 @@ public class GoChannelPool {
     });
   }
 
-  class GoChannel<E> {
+  public class GoChannel<E> {
 
     // Instance
     private final long id;
-    private final LinkedBlockingDeque<GoChannelObject<E>> buffer = new LinkedBlockingDeque<>();
+    private final LinkedBlockingDeque<GoChannelObject<E>> buffer;
 
     public GoChannel() {
       this(getSerialNumber());
@@ -75,6 +81,12 @@ public class GoChannelPool {
 
     private GoChannel(long id) {
       this.id = id;
+      this.buffer = new LinkedBlockingDeque<>();
+    }
+
+    private GoChannel(int capacityDeq) {
+      this.id = getSerialNumber();
+      this.buffer = new LinkedBlockingDeque<>(capacityDeq);
     }
 
     public long getId() {
@@ -108,6 +120,14 @@ public class GoChannelPool {
 
     public int size() {
       return buffer.size();
+    }
+
+    public void close() throws Throwable {
+      this.finalize();
+    }
+
+    public boolean isStoped() {
+      return !channelWeakHashMap.containsKey(getId());
     }
 
     @Override

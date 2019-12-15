@@ -8,6 +8,11 @@ public class EndpointsUpdate {
 
   private ServiceEndpoints endpoints;
 
+  public EndpointsUpdate(long id, ServiceEndpoints endpoints) {
+    this.id = id;
+    this.endpoints = endpoints;
+  }
+
   public long getId() {
     return id;
   }
