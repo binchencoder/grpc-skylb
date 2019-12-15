@@ -3,10 +3,12 @@ package com.binchencoder.skylb;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
+import com.binchencoder.skylb.config.AppConfig;
 import com.binchencoder.skylb.config.LoggerConfig;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
+import com.binchencoder.skylb.svcutil.AppUtil;
 import com.binchencoder.skylb.svcutil.ShutdownHookThread;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
@@ -53,16 +55,23 @@ public class SkyLbStartup {
 
   private static void parseCommandArgs(String[] args, ServerConfig serverConfig) {
     LoggerConfig loggerConfig = new LoggerConfig();
+    AppConfig appConfig = new AppConfig();
     JCommander commander = JCommander.newBuilder()
         .addObject(EtcdClient.etcdConfig)
+        .addObject(appConfig)
         .addObject(serverConfig)
         .addObject(loggerConfig)
         .addObject(SkyLbServiceImpl.config)
         .build();
     commander.setProgramName("SkyLB", "SkyLB Server");
     commander.parse(args);
-    if (serverConfig.getHelp()) {
+    if (appConfig.getHelp()) {
       commander.usage();
+      System.exit(1);
+    }
+
+    if (appConfig.isPrintVersion()) {
+      System.out.println(AppUtil.getAppVersion());
       System.exit(1);
     }
 

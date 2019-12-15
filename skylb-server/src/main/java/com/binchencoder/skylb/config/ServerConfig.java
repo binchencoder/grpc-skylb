@@ -22,10 +22,6 @@ public class ServerConfig {
       description = "The interval of auto rectification in seconds.")
   private int autoRectifyInterval = 60;
 
-  @Parameter(names = {"--help", "-help", "--h", "-h"},
-      description = "Print command line help", help = true)
-  private boolean help = false;
-
   public int getPort() {
     return port;
   }
@@ -48,9 +44,5 @@ public class ServerConfig {
 
   public int getAutoRectifyInterval() {
     return autoRectifyInterval;
-  }
-
-  public boolean getHelp() {
-    return help;
   }
 }
