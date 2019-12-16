@@ -5,7 +5,6 @@ import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
 
 import com.beust.jcommander.Parameters;
 import com.binchencoder.skylb.common.GoChannelPool;
-import com.binchencoder.skylb.common.GoChannelPool.GoChannel;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.Endpoints;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointPort;
@@ -36,7 +35,6 @@ import java.net.SocketAddress;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Formatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +42,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
@@ -53,12 +52,13 @@ public class EndpointsHubImpl implements EndpointsHub {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EndpointsHubImpl.class);
 
-  private static final AtomicLong atomicLong = new AtomicLong();
+  // Generate EndpointsUpdate id
+  private final AtomicLong endpointsUpdateAtomicLong = new AtomicLong(1);
 
-  private static final ReentrantReadWriteLock fairRWLock = new ReentrantReadWriteLock(true);
+  private final ReentrantReadWriteLock fairRWLock = new ReentrantReadWriteLock(true);
 
   // ConcurrentHashMap ??
-  private Map<String, ServiceObject> services = new HashMap<>();
+  private Map<String, ServiceObject> services = new ConcurrentHashMap<>();
   private Map<String, String> graphKey = new ConcurrentHashMap();
 
   private static final Gauge addObserverGauge = Gauge.build()
@@ -98,13 +98,14 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   @Override
-  public GoChannel<EndpointsUpdate> addObserver(List<ServiceSpec> specs, String clientAddr,
-      Boolean resolveFull) {
+  public LinkedBlockingDeque<EndpointsUpdate> addObserver(List<ServiceSpec> specs,
+      String clientAddr, Boolean resolveFull) {
     if (null == specs || specs.isEmpty()) {
       throw new StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(""));
     }
 
-    GoChannel<EndpointsUpdate> up = channelPool.newChannel(ChanCapMultiplication * specs.size());
+    LinkedBlockingDeque<EndpointsUpdate> up = new LinkedBlockingDeque<>(
+        ChanCapMultiplication * specs.size());
     for (ServiceSpec spec : specs) {
       LOGGER.info("Resolve service {}.{} on port name {} from client {}", spec.getNamespace(),
           spec.getServiceName(), spec.getPortName(), clientAddr);
@@ -126,8 +127,8 @@ public class EndpointsHubImpl implements EndpointsHub {
 
       String key = etcdClient.calculateKey(spec.getNamespace(), spec.getServiceName());
       ServiceObject so;
+
       try {
-        fairRWLock.writeLock().lock();
         LOGGER.info("Received initial endpoints for client {}: {}.", clientAddr, eps);
 
         Map<String, ServiceEndpoint> epsMap = this.skypbEndpointsToMap(spec, eps);
@@ -158,17 +159,12 @@ public class EndpointsHubImpl implements EndpointsHub {
         }
 
         up.offer(
-            new EndpointsUpdate(atomicLong.getAndIncrement(), diffEndpoints(spec, null, epsMap)));
+            new EndpointsUpdate(
+                endpointsUpdateAtomicLong.getAndIncrement(), diffEndpoints(spec, null, epsMap)));
       } catch (Exception e) {
-        try {
-          up.close();
-        } catch (Throwable throwable) {
-          throwable.printStackTrace();
-        }
+        up.clear();
 
         throw e;
-      } finally {
-        fairRWLock.writeLock().unlock();
       }
 
       try {
@@ -356,8 +352,6 @@ public class EndpointsHubImpl implements EndpointsHub {
             so.getServiceSpec().getNamespace(), so.getServiceSpec().getServiceName(), sre);
         return;
       }
-
-
     } finally {
       fairRWLock.readLock().unlock();
     }

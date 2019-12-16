@@ -8,6 +8,7 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.hub.EndpointsHub;
+import com.binchencoder.skylb.hub.EndpointsUpdate;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseRequest;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseResponse;
 import com.binchencoder.skylb.proto.ClientProtos.Operation;
@@ -28,13 +29,21 @@ import java.net.InetSocketAddress;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SkyLbServiceImpl extends SkylbImplBase {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SkyLbServiceImpl.class);
+
+  public static Config config = new Config();
+
+  private final Random random = new Random();
 
   private static final Gauge activeObserverGauge = Gauge.build()
       .namespace(NAMESPACE)
@@ -97,7 +106,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       .subsystem(SUBSYSTEM)
       .name("auto_disconn_counts")
       .help("SkyLB auto disconnect counts.")
-      .labelNames("service")
       .register();
 
   // To test this metric, enable flag:
@@ -118,8 +126,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       .labelNames("caller_service", "caller_addr")
       .buckets(0, 0.1, 10)
       .register();
-
-  public static Config config = new Config();
 
   private final EtcdClient etcdClient;
   private final EndpointsHub endpointsHub;
@@ -158,8 +164,10 @@ public class SkyLbServiceImpl extends SkylbImplBase {
     }
 
     try {
+      LinkedBlockingDeque<EndpointsUpdate> notiCh;
       try {
-        endpointsHub.addObserver(specs, remoteAddr.getHostName(), request.getResolveFullEndpoints());
+        notiCh = endpointsHub
+            .addObserver(specs, remoteAddr.getHostName(), request.getResolveFullEndpoints());
       } catch (Exception e) {
         for (ServiceSpec spec : specs) {
           addObserverFailCounts
@@ -183,6 +191,17 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             request.getCallerServiceId(), remoteAddr.toString(), spec.getNamespace(),
             spec.getServiceName(), spec.getPortName());
       }
+
+      final CountDownLatch notiChLatch = new CountDownLatch(1);
+
+      notiChLatch
+          .await(config.flagAutoDisconnTimeout + random.nextInt(config.flagAutoDisconnTimeout),
+              TimeUnit.MILLISECONDS);
+    } catch (InterruptedException e) {
+      LOGGER.info("Auto disconnect with client");
+
+      autoDisconnCounts.inc();
+      responseObserver.onCompleted();
     } finally {
       // untrack service graph
       this.untrackServiceGraph(request, remoteAddr);
@@ -246,8 +265,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
     private int endPointsNotifyTimeout = 10;
 
     @Parameter(names = {"--auto-disconn-timeout", "-auto-disconn-timeout"},
-        description = "The timeout to automatically disconnect the resolve RPC in minutes.")
-    private int flagAutoDisconnTimeout = 5;
+        description = "The timeout to automatically disconnect the resolve RPC in second.")
+    private int flagAutoDisconnTimeout = 60 * 5; // 5 minute
 
     public int getEndPointsNotifyTimeout() {
       return endPointsNotifyTimeout;

@@ -13,11 +13,19 @@ public class AppConfig {
       description = "Print application's version")
   private boolean printVersion = false;
 
+  @Parameter(names = {"--level", "-level", "--l", "-l"},
+      description = "Print application's logger root level")
+  private boolean printLevel = false;
+
   public boolean getHelp() {
     return help;
   }
 
   public boolean isPrintVersion() {
     return this.printVersion;
+  }
+
+  public boolean isPrintLevel() {
+    return printLevel;
   }
 }

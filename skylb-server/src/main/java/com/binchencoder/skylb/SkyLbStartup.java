@@ -3,13 +3,13 @@ package com.binchencoder.skylb;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
+import com.binchencoder.skylb.common.ShutdownHookThread;
 import com.binchencoder.skylb.config.AppConfig;
 import com.binchencoder.skylb.config.LoggerConfig;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
 import com.binchencoder.skylb.svcutil.AppUtil;
-import com.binchencoder.skylb.svcutil.ShutdownHookThread;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +71,13 @@ public class SkyLbStartup {
     }
 
     if (appConfig.isPrintVersion()) {
-      System.out.println(AppUtil.getAppVersion());
+      commander.getConsole().println(AppUtil.getAppVersion());
+      System.exit(1);
+    }
+
+    if (appConfig.isPrintLevel()) {
+      LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+      commander.getConsole().println(loggerContext.getLogger("root").getLevel().levelStr);
       System.exit(1);
     }
 

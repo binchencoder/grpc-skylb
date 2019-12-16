@@ -1,26 +1,37 @@
 package com.binchencoder.skylb.svcutil;
 
-import java.io.IOException;
-import java.util.Properties;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.jar.Manifest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AppUtil {
 
-  private static String appVersion;
+  private static final Logger LOGGER = LoggerFactory.getLogger(AppUtil.class);
 
   public static String getAppVersion() {
-    if (null == appVersion) {
-      Properties properties = new Properties();
-      try {
-        properties.load(AppUtil.class.getClassLoader().getResourceAsStream("application.properties"));
-        if (!properties.isEmpty()) {
-          appVersion = properties.getProperty("version");
+    try {
+      ClassLoader classLoader = AppUtil.class.getClassLoader();
+      if (classLoader != null) {
+        Enumeration<URL> resources = classLoader.getResources("META-INF/MANIFEST.MF");
+        while (resources.hasMoreElements()) {
+          Manifest manifest = new Manifest(resources.nextElement().openStream());
+          String ver = manifest.getMainAttributes().getValue("Implementation-Version");
+          if (ver != null) {
+            String title = manifest.getMainAttributes().getValue("Implementation-Title");
+            if (null != title) {
+              return title + "-" + ver;
+            }
+
+            return ver;
+          }
         }
-      } catch (IOException e) {
-        e.printStackTrace();
       }
+    } catch (Exception e) {
+      LOGGER.error("Can't get manifest file", e);
     }
 
-    return appVersion;
+    return "UnImplementation";
   }
-
 }
