@@ -1,5 +1,6 @@
 package com.binchencoder.skylb.grpc;
 
+import static com.binchencoder.skylb.hub.EndpointsHub.ChanCapMultiplication;
 import static com.binchencoder.skylb.prometheus.PrometheusMetrics.NAMESPACE;
 import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
 
@@ -11,15 +12,18 @@ import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsUpdate;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseRequest;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseResponse;
+import com.binchencoder.skylb.proto.ClientProtos.InstanceEndpoint;
 import com.binchencoder.skylb.proto.ClientProtos.Operation;
 import com.binchencoder.skylb.proto.ClientProtos.ReportLoadRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ReportLoadResponse;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveResponse;
+import com.binchencoder.skylb.proto.ClientProtos.ServiceEndpoints;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import com.binchencoder.skylb.proto.SkylbGrpc.SkylbImplBase;
 import com.binchencoder.skylb.utils.GrpcContextUtils;
 import io.grpc.Status;
+import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import io.prometheus.client.Counter;
@@ -30,6 +34,9 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -123,7 +130,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       .subsystem(SUBSYSTEM)
       .name("notify_chan_usage")
       .help("The usage rate of the notify channel.")
-      .labelNames("caller_service", "caller_addr")
       .buckets(0, 0.1, 10)
       .register();
 
@@ -143,7 +149,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
   @Override
   public void resolve(ResolveRequest request, StreamObserver<ResolveResponse> responseObserver) {
-    LOGGER.info("Caller service {}", request.getCallerServiceId());
+    LOGGER.info("SkyLbServiceImpl#resolve caller service {}", request.getCallerServiceId());
     observeRpcCounts.inc();
 
     InetSocketAddress remoteAddr = (InetSocketAddress) GrpcContextUtils.getRemoteAddr();
@@ -163,6 +169,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       endpointsHub.trackServiceGraph(request, spec, remoteAddr);
     }
 
+    Timer timer = null;
+    TimerTask timeoutTask = null;
     try {
       LinkedBlockingDeque<EndpointsUpdate> notiCh;
       try {
@@ -192,17 +200,88 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             spec.getServiceName(), spec.getPortName());
       }
 
-      final CountDownLatch notiChLatch = new CountDownLatch(1);
+      timer = new Timer();
+      timeoutTask = new TimerTask() {
+        @Override
+        public void run() {
+          LOGGER.info("Auto disconnect with client");
+          autoDisconnCounts.inc();
 
-      notiChLatch
-          .await(config.flagAutoDisconnTimeout + random.nextInt(config.flagAutoDisconnTimeout),
-              TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      LOGGER.info("Auto disconnect with client");
+          notiCh.clear();
+          responseObserver.onCompleted();
+        }
+      };
+      timer.schedule(timeoutTask,
+          config.getFlagAutoDisconnTimeout() + random.nextInt(config.getFlagAutoDisconnTimeout()));
 
-      autoDisconnCounts.inc();
+      EndpointsUpdate eu;
+      while (null != (eu = notiCh.poll())) {
+        LOGGER.info("SkyLb server #Resolve:  receive AddObserver notify chan {}.", eu.getId());
+        notifyChanUsageHistogram.observe(
+            (float) (notiCh.size()) / ChanCapMultiplication / (float) (request.getServicesCount()));
+
+        long maxId = maxIds.get(eu.getEndpoints().getSpec().getServiceName());
+        if (eu.getId() < maxId) {
+          // Skip the old updates.
+          continue;
+        } else {
+          maxIds.put(eu.getEndpoints().getSpec().getServiceName(), eu.getId());
+        }
+
+        ServiceEndpoints eps = eu.getEndpoints();
+        this.logResolveEndpoints(request, remoteAddr, eps);
+
+        ResolveResponse resp = ResolveResponse.newBuilder()
+            .setSvcEndpoints(ServiceEndpoints.newBuilder()
+                .setSpec(eps.getSpec())
+//                .addAllInstEndpoints(eps.getInstEndpointsList())
+                .addInstEndpoints(InstanceEndpoint.newBuilder().setHost("127.0.0.1").setPort(11122))
+                .build())
+            .build();
+
+        final CountDownLatch respLatch = new CountDownLatch(1);
+        CompletableFuture.runAsync(() -> {
+          try {
+            responseObserver.onNext(resp);
+            LOGGER.info("responseObserver.onNext: {}", resp.toBuilder().toString());
+          } catch (Throwable t) {
+            String errMsg = new Formatter().format(
+                "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
+                request.getCallerServiceId(), remoteAddr.getHostString()).toString();
+            responseObserver.onError(new StatusRuntimeException(
+                Status.INTERNAL.withDescription(errMsg)));
+          } finally {
+            respLatch.countDown();
+          }
+        });
+        try {
+          respLatch.await(config.getFlagNotifyTimeout(), TimeUnit.SECONDS);
+        } catch (InterruptedException ie) {
+          // Discard the current gRPC stream if timeout.
+          LOGGER.error(
+              "Time out to send endpoints update to caller service ID {} client {}, abandon the stream.",
+              request.getCallerServiceId(), remoteAddr.getHostString());
+          // It's OK to record p.Addr.String in label value, since such events should be rare, and will not accumulate too much data.
+          notifyTimeoutCounts
+              .labels(request.getCallerServiceId().toString(), remoteAddr.getHostString()).inc();
+
+          responseObserver.onError(new StatusRuntimeException(
+              Status.fromCode(Code.DEADLINE_EXCEEDED)
+                  .withDescription("time out to send endpoints update to client")));
+        }
+      }
+
       responseObserver.onCompleted();
+      LOGGER.info("responseObserver.onCompleted()");
     } finally {
+      if (null != timeoutTask) {
+        timeoutTask.cancel();
+      }
+      if (null != timer) {
+        timer.purge();
+        timer.cancel();
+      }
+
       // untrack service graph
       this.untrackServiceGraph(request, remoteAddr);
 
@@ -215,8 +294,38 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).dec();
       }
     }
+  }
 
-    super.resolve(request, responseObserver);
+  private void logResolveEndpoints(ResolveRequest request, InetSocketAddress remoteAddr,
+      ServiceEndpoints eps) {
+    if (LOGGER.isDebugEnabled()) {
+      StringBuffer sb = new StringBuffer();
+      for (int i = 0; i < eps.getInstEndpointsCount(); i++) {
+        if (i > 0) {
+          sb.append(", ");
+        }
+        InstanceEndpoint iep = eps.getInstEndpointsList().get(i);
+        sb.append(new Formatter()
+            .format("[%s]%s:%d", opToString(iep.getOp()), iep.getHost(), iep.getPort()));
+      }
+      if (request.getResolveFullEndpoints()) {
+        LOGGER.debug("Full endpoints of service {} for caller service ID %d client {}: {}.",
+            eps.getSpec().getServiceName(), request.getCallerServiceId(),
+            remoteAddr.getHostString(), sb.toString());
+      } else {
+        LOGGER.debug("Endpoints changed for caller service ID {} client {} with updates {}.",
+            request.getCallerServiceId(), remoteAddr.getHostString(), sb.toString());
+      }
+    } else {
+      if (request.getResolveFullEndpoints()) {
+        LOGGER.info("Send full endpoints of service {} for caller service ID {} client {}.",
+            eps.getSpec().getServiceName(), request.getCallerServiceId(),
+            remoteAddr.getHostString());
+      } else {
+        LOGGER.info("Endpoints changed for caller service ID {} client {}.",
+            request.getCallerServiceId(), remoteAddr.getHostString());
+      }
+    }
   }
 
   @Override
@@ -260,20 +369,20 @@ public class SkyLbServiceImpl extends SkylbImplBase {
   @Parameters(separators = "=")
   public static class Config {
 
+    @Parameter(names = {"--auto-disconn-timeout", "-auto-disconn-timeout"},
+        description = "The timeout to automatically disconnect the resolve RPC in seconds.")
+    private int flagAutoDisconnTimeout = 5 * 60; // 5 minute
+
     @Parameter(names = {"--endpoints-notify-timeout", "-endpoints-notify-timeout"},
         description = "The timeout to notify client endpoints update in seconds.")
-    private int endPointsNotifyTimeout = 10;
-
-    @Parameter(names = {"--auto-disconn-timeout", "-auto-disconn-timeout"},
-        description = "The timeout to automatically disconnect the resolve RPC in second.")
-    private int flagAutoDisconnTimeout = 60 * 5; // 5 minute
-
-    public int getEndPointsNotifyTimeout() {
-      return endPointsNotifyTimeout;
-    }
+    private int flagNotifyTimeout = 10;
 
     public int getFlagAutoDisconnTimeout() {
-      return flagAutoDisconnTimeout;
+      return flagAutoDisconnTimeout * 1000;
+    }
+
+    public int getFlagNotifyTimeout() {
+      return flagNotifyTimeout;
     }
   }
 }

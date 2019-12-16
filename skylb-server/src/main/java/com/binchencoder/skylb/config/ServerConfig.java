@@ -43,6 +43,6 @@ public class ServerConfig {
   }
 
   public int getAutoRectifyInterval() {
-    return autoRectifyInterval;
+    return autoRectifyInterval * 1000;
   }
 }

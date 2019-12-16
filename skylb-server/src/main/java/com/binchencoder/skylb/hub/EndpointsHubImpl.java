@@ -127,7 +127,6 @@ public class EndpointsHubImpl implements EndpointsHub {
 
       String key = etcdClient.calculateKey(spec.getNamespace(), spec.getServiceName());
       ServiceObject so;
-
       try {
         LOGGER.info("Received initial endpoints for client {}: {}.", clientAddr, eps);
 
@@ -338,12 +337,12 @@ public class EndpointsHubImpl implements EndpointsHub {
   private void updateEndpoints(String key) {
     try {
       fairRWLock.readLock().lock();
-      if (services.containsKey(key)) {
+      ServiceObject so = services.get(key);
+      if (null == so) {
         LOGGER.warn("serviceObject nil for key {}", key);
         return;
       }
 
-      ServiceObject so = services.get(key);
       try {
         this.fetchEndpoints(so.getServiceSpec().getNamespace(),
             so.getServiceSpec().getServiceName());
