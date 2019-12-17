@@ -4,7 +4,6 @@ import static com.binchencoder.skylb.prometheus.PrometheusMetrics.NAMESPACE;
 import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
 
 import com.beust.jcommander.Parameters;
-import com.binchencoder.skylb.common.GoChannelPool;
 import com.binchencoder.skylb.common.GoChannelQueue;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.Endpoints;
@@ -81,14 +80,10 @@ public class EndpointsHubImpl implements EndpointsHub {
 
   private final ServerConfig serverConfig;
 
-  private final GoChannelPool channelPool;
-
   // Constructor
-  public EndpointsHubImpl(EtcdClient etcdClient, ServerConfig serverConfig,
-      GoChannelPool channelPool) {
+  public EndpointsHubImpl(EtcdClient etcdClient, ServerConfig serverConfig) {
     this.etcdClient = etcdClient;
     this.serverConfig = serverConfig;
-    this.channelPool = channelPool;
   }
 
   private ExecutorService endpointExecutor;

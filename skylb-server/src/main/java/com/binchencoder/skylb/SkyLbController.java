@@ -1,7 +1,6 @@
 package com.binchencoder.skylb;
 
 import com.beust.jcommander.internal.Lists;
-import com.binchencoder.skylb.common.GoChannelPool;
 import com.binchencoder.skylb.common.ThreadFactoryImpl;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
@@ -10,6 +9,7 @@ import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsHubImpl;
 import com.binchencoder.skylb.interceptors.HeaderInterceptor;
 import com.binchencoder.skylb.interceptors.HeaderServerInterceptor;
+import com.binchencoder.skylb.lameduck.LameDuck;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
@@ -31,11 +31,11 @@ public class SkyLbController {
 
   private EtcdClient etcdClient;
   private EndpointsHub endpointsHub;
+  private LameDuck lameDuck;
 
   private Server server;
 
   private ExecutorService endpointExecutor;
-  private GoChannelPool channelPool;
 
   private ExecutorService serviceGraphExecutor;
 
@@ -49,17 +49,18 @@ public class SkyLbController {
         .newCachedThreadPool(new ThreadFactoryImpl("EndpointExecutorThread_"));
     this.serviceGraphExecutor = Executors
         .newSingleThreadExecutor(new ThreadFactoryImpl("ServiceGraphExecutorThread_"));
-    this.channelPool = GoChannelPool.getDefaultInstance();
 
-    EndpointsHubImpl endpointsHubImpl = new EndpointsHubImpl(etcdClient, serverConfig, channelPool);
+    EndpointsHubImpl endpointsHubImpl = new EndpointsHubImpl(etcdClient, serverConfig);
     endpointsHubImpl.registerProcessor(endpointExecutor);
     this.endpointsHub = endpointsHubImpl;
+
+    this.lameDuck = new LameDuck(etcdClient);
 
     return true;
   }
 
   public void start() throws IOException {
-    SkyLbServiceImpl skyLbService = new SkyLbServiceImpl(etcdClient, endpointsHub);
+    SkyLbServiceImpl skyLbService = new SkyLbServiceImpl(endpointsHub, lameDuck);
     skyLbService.registerProcessor(endpointExecutor);
 
     // Bind server interceptors

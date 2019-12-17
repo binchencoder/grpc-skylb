@@ -8,9 +8,9 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
 import com.binchencoder.skylb.common.GoChannelQueue;
-import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsUpdate;
+import com.binchencoder.skylb.lameduck.LameDuck;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseRequest;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseResponse;
 import com.binchencoder.skylb.proto.ClientProtos.InstanceEndpoint;
@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -134,12 +133,12 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       .buckets(0, 0.1, 10)
       .register();
 
-  private final EtcdClient etcdClient;
   private final EndpointsHub endpointsHub;
+  private final LameDuck lameDuck;
 
-  public SkyLbServiceImpl(final EtcdClient etcdClient, final EndpointsHub endpointsHub) {
-    this.etcdClient = etcdClient;
+  public SkyLbServiceImpl(final EndpointsHub endpointsHub, final LameDuck lameDuck) {
     this.endpointsHub = endpointsHub;
+    this.lameDuck = lameDuck;
   }
 
   private ExecutorService serviceGraphExecutor;
@@ -241,27 +240,27 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         ResolveResponse resp = ResolveResponse.newBuilder()
             .setSvcEndpoints(ServiceEndpoints.newBuilder()
                 .setSpec(eps.getSpec())
-//                .addAllInstEndpoints(eps.getInstEndpointsList())
-                .addInstEndpoints(InstanceEndpoint.newBuilder().setHost("127.0.0.1").setPort(11122))
+                .addAllInstEndpoints(eps.getInstEndpointsList())
+//                .addInstEndpoints(InstanceEndpoint.newBuilder().setHost("127.0.0.1").setPort(11122))
                 .build())
             .build();
 
         final CountDownLatch respLatch = new CountDownLatch(1);
-        CompletableFuture.runAsync(() -> {
-          try {
-            responseObserver.onNext(resp);
-            LOGGER.info("responseObserver.onNext: {}", resp.toBuilder().toString());
-          } catch (Throwable t) {
-            String errMsg = new Formatter().format(
-                "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
-                request.getCallerServiceId(), remoteAddr.getHostString()).toString();
-            LOGGER.error(errMsg, t);
-            responseObserver
-                .onError(new StatusRuntimeException(Status.INTERNAL.withDescription(errMsg)));
-          } finally {
-            respLatch.countDown();
-          }
-        });
+//        CompletableFuture.runAsync(() -> {
+        try {
+          responseObserver.onNext(resp);
+          LOGGER.info("responseObserver.onNext: {}", resp.toBuilder().toString());
+        } catch (Throwable t) {
+          String errMsg = new Formatter().format(
+              "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
+              request.getCallerServiceId(), remoteAddr.getHostString()).toString();
+          LOGGER.error(errMsg, t);
+          responseObserver
+              .onError(new StatusRuntimeException(Status.INTERNAL.withDescription(errMsg)));
+        } finally {
+          respLatch.countDown();
+        }
+//        });
         try {
           respLatch.await(config.getFlagNotifyTimeout(), TimeUnit.SECONDS);
         } catch (InterruptedException ie) {
@@ -315,50 +314,80 @@ public class SkyLbServiceImpl extends SkylbImplBase {
     String hostAddr = remoteAddr.getAddress().getHostAddress();
     LOGGER.info("SkyLb server#reportLoad Start accepting load report from {}.", hostAddr);
 
-    try {
-      activeReporterGauge.labels(hostAddr).inc();
+    activeReporterGauge.labels(hostAddr).inc();
 
-      boolean first = true;
+    boolean[] first = {true};
+    try {
       return new StreamObserver<ReportLoadRequest>() {
         @Override
         public void onNext(ReportLoadRequest req) {
-          while (true) {
-            ServiceSpec spec = req.getSpec();
-            String label = formatServiceSpec(spec.getNamespace(), spec.getServiceName());
-            reportLoadCounts.labels(label).inc();
+          ServiceSpec spec = req.getSpec();
+          String label = formatServiceSpec(spec.getNamespace(), spec.getServiceName());
+          reportLoadCounts.labels(label).inc();
 
-            // Replace host name if fixed_host has been specified.
-            String fixHostAddr = hostAddr;
-            if (!Strings.isNullOrEmpty(req.getFixedHost())) {
-              fixHostAddr = req.getFixedHost();
-              LOGGER.info("Use fixed host {} instead of {}", fixHostAddr, hostAddr);
-            }
-
-            if (first) {
-              LOGGER.info("Received init load report from %s at %s", label, remoteAddr.toString());
-              initReportLoadCounts.labels(label).inc();
-
-              // When the service with weights is turned off, the service
-              // is restarted in less than 10 seconds, especially if
-              // the weights are modified. If only the epsHub.UpsertEndpoint
-              // method is used, the weight level is not modified.
-              // purely Just to prevent this issue.
-              endpointsHub.insertEndpoint(spec, fixHostAddr, req.getPort() + "", req.getWeight());
-            }
+          // Replace host name if fixed_host has been specified.
+          String fixHostAddr = hostAddr;
+          if (!Strings.isNullOrEmpty(req.getFixedHost())) {
+            fixHostAddr = req.getFixedHost();
+            LOGGER.info("Use fixed host {} instead of {}", fixHostAddr, hostAddr);
           }
+
+          if (first[0]) {
+            LOGGER.info("Received init load report from {} at {}", label, remoteAddr.toString());
+            initReportLoadCounts.labels(label).inc();
+
+            /**
+             * When the service with weights is turned off, the service is restarted in less than 10 seconds,
+             * especially if the weights are modified. If only the epsHub.UpsertEndpoint method is used,
+             * the weight level is not modified. purely Just to prevent this issue.
+             */
+            try {
+              endpointsHub.insertEndpoint(spec, fixHostAddr, req.getPort() + "", req.getWeight());
+            } catch (Exception e) {
+              LOGGER.error(
+                  "Failed to update etcd entry for endpoint {}:{}, closing the report stream.",
+                  fixHostAddr, req.getPort());
+
+              responseObserver.onError(e);
+            }
+
+            first[0] = false;
+          }
+
+          // Block the heart beat if the server is lame duck.
+          String endpoint = lameDuck.formatHostPort(fixHostAddr, String.valueOf(req.getPort()));
+          if (lameDuck.isLameduckMode(endpoint)) {
+            LOGGER.info("Received load report from {}:{}, masked", fixHostAddr, req.getPort());
+            return;
+          }
+
+          LOGGER.info("Received load report from {}:{}.", fixHostAddr, req.getPort());
+          try {
+            endpointsHub
+                .upsertEndpoint(req.getSpec(), fixHostAddr, req.getPort() + "", req.getWeight());
+          } catch (Exception e) {
+            LOGGER.error(
+                "Failed to update etcd entry for endpoint {}:{}, closing the report stream.",
+                fixHostAddr, req.getPort());
+
+            responseObserver.onError(e);
+          }
+
+//          responseObserver.onNext(ReportLoadResponse.newBuilder().build());
         }
 
         @Override
         public void onError(Throwable throwable) {
-          throw new StatusRuntimeException(
-              Status.UNAVAILABLE.withDescription(throwable.getMessage()));
+          LOGGER.error("ReportLoadRequest streamObserver error", throwable.getCause());
         }
 
         @Override
         public void onCompleted() {
-
+          LOGGER.info("ReportLoadRequest streamObserver onCompleted");
+          responseObserver.onCompleted();
         }
       };
+
     } finally {
       activeReporterGauge.labels(hostAddr).dec();
     }
