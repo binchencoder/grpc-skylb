@@ -26,6 +26,8 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
+import io.etcd.jetcd.common.exception.ErrorCode;
+import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.grpc.Status;
@@ -41,6 +43,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -171,13 +174,32 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   @Override
-  public void insertEndpoint(ServiceSpec spec, String host, String port, Integer weight) {
+  public void insertEndpoint(ServiceSpec spec, String host, int port, Integer weight) {
+    String key = etcdClient.calculateEndpointKey(spec.getNamespace(), spec.getServiceName(), host,
+        Integer.valueOf(port));
 
+    try {
+      etcdClient.setKey(key, spec, host, port, weight);
+    } catch (ExecutionException | InterruptedException e) {
+      LOGGER.error("EtcdClient#setKey error", e);
+    }
   }
 
   @Override
-  public void upsertEndpoint(ServiceSpec spec, String host, String port, Integer weight) {
+  public void upsertEndpoint(ServiceSpec spec, String host, int port, Integer weight) {
+    String key = etcdClient.calculateEndpointKey(spec.getNamespace(), spec.getServiceName(), host,
+        Integer.valueOf(port));
 
+    try {
+      etcdClient.refreshKey(key);
+    } catch (EtcdException etcdEx) {
+      // Sometimes the key might be dropped or expired so that refreshKey will fail.
+      if (etcdEx.getErrorCode() == ErrorCode.DATA_LOSS) {
+        this.insertEndpoint(spec, host, port, weight);
+      }
+    } catch (ExecutionException | InterruptedException e) {
+      LOGGER.error("EtcdClient#refresh key error", e);
+    }
   }
 
   @Override

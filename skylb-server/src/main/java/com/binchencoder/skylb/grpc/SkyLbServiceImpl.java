@@ -342,7 +342,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
              * the weight level is not modified. purely Just to prevent this issue.
              */
             try {
-              endpointsHub.insertEndpoint(spec, fixHostAddr, req.getPort() + "", req.getWeight());
+              endpointsHub.insertEndpoint(spec, fixHostAddr, req.getPort(), req.getWeight());
             } catch (Exception e) {
               LOGGER.error(
                   "Failed to update etcd entry for endpoint {}:{}, closing the report stream.",
@@ -364,7 +364,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           LOGGER.info("Received load report from {}:{}.", fixHostAddr, req.getPort());
           try {
             endpointsHub
-                .upsertEndpoint(req.getSpec(), fixHostAddr, req.getPort() + "", req.getWeight());
+                .upsertEndpoint(req.getSpec(), fixHostAddr, req.getPort(), req.getWeight());
           } catch (Exception e) {
             LOGGER.error(
                 "Failed to update etcd entry for endpoint {}:{}, closing the report stream.",

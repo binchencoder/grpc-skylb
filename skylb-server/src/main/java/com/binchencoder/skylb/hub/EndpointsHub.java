@@ -28,12 +28,12 @@ public interface EndpointsHub {
   /**
    * Inserts a service with the given namespace and service name.
    */
-  void insertEndpoint(ServiceSpec spec, String host, String port, Integer weight);
+  void insertEndpoint(ServiceSpec spec, String host, int port, Integer weight);
 
   /**
    * Inserts or update a service with the given namespace and service name.
    */
-  void upsertEndpoint(ServiceSpec spec, String host, String port, Integer weight);
+  void upsertEndpoint(ServiceSpec spec, String host, int port, Integer weight);
 
   /**
    * Keeps track of dependency graph between clients and services.
