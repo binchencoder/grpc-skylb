@@ -1,10 +1,10 @@
 package com.binchencoder.skylb.hub;
 
+import com.binchencoder.skylb.common.GoChannelQueue;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import java.net.SocketAddress;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * EndpointsHub defines the service endpoints hub based on etcd.
@@ -17,8 +17,8 @@ public interface EndpointsHub {
    * Adds an observer of the given service specs for the given clientAddr. When service endpoints
    * changed, it notifies the observer through the returned channel.
    */
-  LinkedBlockingDeque<EndpointsUpdate> addObserver(List<ServiceSpec> specs, String clientAddr,
-      Boolean resolveFull);
+  GoChannelQueue<EndpointsUpdate> addObserver(List<ServiceSpec> specs, String clientAddr,
+      Boolean resolveFull) throws InterruptedException;
 
   /**
    * Removes the observer for the given service specs for the given clientAddr.

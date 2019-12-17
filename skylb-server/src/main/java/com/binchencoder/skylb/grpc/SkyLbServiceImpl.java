@@ -7,6 +7,7 @@ import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
+import com.binchencoder.skylb.common.GoChannelQueue;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsUpdate;
@@ -22,6 +23,7 @@ import com.binchencoder.skylb.proto.ClientProtos.ServiceEndpoints;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import com.binchencoder.skylb.proto.SkylbGrpc.SkylbImplBase;
 import com.binchencoder.skylb.utils.GrpcContextUtils;
+import com.google.common.base.Strings;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
@@ -39,7 +41,6 @@ import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,7 +150,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
   @Override
   public void resolve(ResolveRequest request, StreamObserver<ResolveResponse> responseObserver) {
-    LOGGER.info("SkyLbServiceImpl#resolve caller service {}", request.getCallerServiceId());
     observeRpcCounts.inc();
 
     InetSocketAddress remoteAddr = (InetSocketAddress) GrpcContextUtils.getRemoteAddr();
@@ -157,37 +157,41 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       throw new StatusRuntimeException(
           Status.DATA_LOSS.withDescription("Failed to get peer client info from context."));
     }
-    LOGGER.info("Remote ip: {}", remoteAddr.getHostString());
+    String hostString = remoteAddr.toString();
+    LOGGER.info("SkyLb server#resolve caller service {},  clientAddr: {}",
+        request.getCallerServiceId(), hostString);
 
     List<ServiceSpec> specs = request.getServicesList();
     if (specs.isEmpty()) {
       throw new StatusRuntimeException(
-          Status.INVALID_ARGUMENT.withDescription("No service spec found.."));
+          Status.INVALID_ARGUMENT.withDescription("No service spec found."));
     }
 
     for (ServiceSpec spec : specs) {
       endpointsHub.trackServiceGraph(request, spec, remoteAddr);
     }
 
+    GoChannelQueue<EndpointsUpdate> endpointChannel;
+    try {
+      endpointChannel = endpointsHub
+          .addObserver(specs, hostString, request.getResolveFullEndpoints());
+    } catch (InterruptedException e) {
+      for (ServiceSpec spec : specs) {
+        addObserverFailCounts
+            .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).inc();
+      }
+
+      String log = new Formatter()
+          .format("Failed to register caller service ID %d client %s to observe services",
+              request.getCallerServiceId(), remoteAddr.toString()).toString();
+      LOGGER.error(log, e);
+      responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription(log)));
+      return;
+    }
+
     Timer timer = null;
     TimerTask timeoutTask = null;
     try {
-      LinkedBlockingDeque<EndpointsUpdate> notiCh;
-      try {
-        notiCh = endpointsHub
-            .addObserver(specs, remoteAddr.getHostName(), request.getResolveFullEndpoints());
-      } catch (Exception e) {
-        for (ServiceSpec spec : specs) {
-          addObserverFailCounts
-              .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).inc();
-        }
-
-        LOGGER.warn("Failed to register caller service ID {} client {} to observe services",
-            request.getCallerServiceId(), remoteAddr.toString(), e);
-
-        throw e;
-      }
-
       Map<String, Long> maxIds = Maps.newHashMap();
       for (ServiceSpec spec : specs) {
         maxIds.put(spec.getServiceName(), 0L);
@@ -196,7 +200,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).inc();
         LOGGER.info(
             "Registered caller service ID {} client {} to observe service {}.{} on port name {}",
-            request.getCallerServiceId(), remoteAddr.toString(), spec.getNamespace(),
+            request.getCallerServiceId(), hostString, spec.getNamespace(),
             spec.getServiceName(), spec.getPortName());
       }
 
@@ -204,10 +208,12 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       timeoutTask = new TimerTask() {
         @Override
         public void run() {
-          LOGGER.info("Auto disconnect with client");
+          LOGGER.info("Auto disconnect with client, clientAddr: {}", hostString);
           autoDisconnCounts.inc();
 
-          notiCh.clear();
+          endpointChannel.close(0);
+          // Channel has been closed.
+          LOGGER.info("responseObserver.onCompleted()");
           responseObserver.onCompleted();
         }
       };
@@ -215,10 +221,11 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           config.getFlagAutoDisconnTimeout() + random.nextInt(config.getFlagAutoDisconnTimeout()));
 
       EndpointsUpdate eu;
-      while (null != (eu = notiCh.poll())) {
+      while (null != (eu = endpointChannel.take())) {
         LOGGER.info("SkyLb server #Resolve:  receive AddObserver notify chan {}.", eu.getId());
         notifyChanUsageHistogram.observe(
-            (float) (notiCh.size()) / ChanCapMultiplication / (float) (request.getServicesCount()));
+            (float) (endpointChannel.size()) / ChanCapMultiplication / (float) (request
+                .getServicesCount()));
 
         long maxId = maxIds.get(eu.getEndpoints().getSpec().getServiceName());
         if (eu.getId() < maxId) {
@@ -248,8 +255,9 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             String errMsg = new Formatter().format(
                 "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
                 request.getCallerServiceId(), remoteAddr.getHostString()).toString();
-            responseObserver.onError(new StatusRuntimeException(
-                Status.INTERNAL.withDescription(errMsg)));
+            LOGGER.error(errMsg, t);
+            responseObserver
+                .onError(new StatusRuntimeException(Status.INTERNAL.withDescription(errMsg)));
           } finally {
             respLatch.countDown();
           }
@@ -272,7 +280,13 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       }
 
       responseObserver.onCompleted();
-      LOGGER.info("responseObserver.onCompleted()");
+    } catch (InterruptedException e) {
+      String errMsg = new Formatter().format(
+          "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
+          request.getCallerServiceId(), hostString).toString();
+      LOGGER.error(errMsg, e);
+      responseObserver.onError(new StatusRuntimeException(
+          Status.INTERNAL.withDescription(errMsg)));
     } finally {
       if (null != timeoutTask) {
         timeoutTask.cancel();
@@ -282,17 +296,104 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         timer.cancel();
       }
 
+      this.removeObserver(request, remoteAddr, specs);
       // untrack service graph
       this.untrackServiceGraph(request, remoteAddr);
+    }
+  }
 
-      LOGGER.info("Stop observing services for caller service ID {} client {}",
-          request.getCallerServiceId(), remoteAddr.toString());
-      endpointsHub.removeObserver(specs, remoteAddr.toString());
-      for (ServiceSpec spec : specs) {
-        endpointsHub.trackServiceGraph(request, spec, remoteAddr);
-        activeObserverGauge
-            .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).dec();
-      }
+  @Override
+  public StreamObserver<ReportLoadRequest> reportLoad(
+      StreamObserver<ReportLoadResponse> responseObserver) {
+    reportLoadRpcCounts.inc();
+
+    InetSocketAddress remoteAddr = (InetSocketAddress) GrpcContextUtils.getRemoteAddr();
+    if (null == remoteAddr) {
+      throw new StatusRuntimeException(
+          Status.DATA_LOSS.withDescription("Failed to get peer client info from context."));
+    }
+    String hostAddr = remoteAddr.getAddress().getHostAddress();
+    LOGGER.info("SkyLb server#reportLoad Start accepting load report from {}.", hostAddr);
+
+    try {
+      activeReporterGauge.labels(hostAddr).inc();
+
+      boolean first = true;
+      return new StreamObserver<ReportLoadRequest>() {
+        @Override
+        public void onNext(ReportLoadRequest req) {
+          while (true) {
+            ServiceSpec spec = req.getSpec();
+            String label = formatServiceSpec(spec.getNamespace(), spec.getServiceName());
+            reportLoadCounts.labels(label).inc();
+
+            // Replace host name if fixed_host has been specified.
+            String fixHostAddr = hostAddr;
+            if (!Strings.isNullOrEmpty(req.getFixedHost())) {
+              fixHostAddr = req.getFixedHost();
+              LOGGER.info("Use fixed host {} instead of {}", fixHostAddr, hostAddr);
+            }
+
+            if (first) {
+              LOGGER.info("Received init load report from %s at %s", label, remoteAddr.toString());
+              initReportLoadCounts.labels(label).inc();
+
+              // When the service with weights is turned off, the service
+              // is restarted in less than 10 seconds, especially if
+              // the weights are modified. If only the epsHub.UpsertEndpoint
+              // method is used, the weight level is not modified.
+              // purely Just to prevent this issue.
+              endpointsHub.insertEndpoint(spec, fixHostAddr, req.getPort() + "", req.getWeight());
+            }
+          }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+          throw new StatusRuntimeException(
+              Status.UNAVAILABLE.withDescription(throwable.getMessage()));
+        }
+
+        @Override
+        public void onCompleted() {
+
+        }
+      };
+    } finally {
+      activeReporterGauge.labels(hostAddr).dec();
+    }
+  }
+
+  @Override
+  public StreamObserver<DiagnoseResponse> attachForDiagnosis(
+      StreamObserver<DiagnoseRequest> responseObserver) {
+    return super.attachForDiagnosis(responseObserver);
+  }
+
+  private String opToString(Operation op) {
+    switch (op) {
+      case Add:
+        return "ADD";
+      case Delete:
+        return "DELETE";
+      default:
+        return "";
+    }
+  }
+
+  private String formatServiceSpec(String nameSpace, String serviceName) {
+    return new Formatter().format("%s.%s", nameSpace, serviceName).toString();
+  }
+
+  private void removeObserver(ResolveRequest request, InetSocketAddress remoteAddr,
+      List<ServiceSpec> specs) {
+    LOGGER.info("Stop observing services for caller service ID {} client {}",
+        request.getCallerServiceId(), remoteAddr.toString());
+    endpointsHub.removeObserver(specs, remoteAddr.toString());
+    for (ServiceSpec spec : specs) {
+      endpointsHub.trackServiceGraph(request, spec, remoteAddr);
+      activeObserverGauge
+          .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).dec();
     }
   }
 
@@ -326,36 +427,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             request.getCallerServiceId(), remoteAddr.getHostString());
       }
     }
-  }
-
-  @Override
-  public StreamObserver<ReportLoadRequest> reportLoad(
-      StreamObserver<ReportLoadResponse> responseObserver) {
-    InetSocketAddress remoteAddr = (InetSocketAddress) GrpcContextUtils.getRemoteAddr();
-    LOGGER.info("Remote ip: {}", remoteAddr.toString());
-
-    return super.reportLoad(responseObserver);
-  }
-
-  @Override
-  public StreamObserver<DiagnoseResponse> attachForDiagnosis(
-      StreamObserver<DiagnoseRequest> responseObserver) {
-    return super.attachForDiagnosis(responseObserver);
-  }
-
-  private String opToString(Operation op) {
-    switch (op) {
-      case Add:
-        return "ADD";
-      case Delete:
-        return "DELETE";
-      default:
-        return "";
-    }
-  }
-
-  private String formatServiceSpec(String nameSpace, String serviceName) {
-    return new Formatter().format("%s.%s", nameSpace, serviceName).toString();
   }
 
   private void untrackServiceGraph(ResolveRequest request, InetSocketAddress remoteAddr) {

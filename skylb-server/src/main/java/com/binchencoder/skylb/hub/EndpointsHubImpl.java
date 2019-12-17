@@ -5,6 +5,7 @@ import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
 
 import com.beust.jcommander.Parameters;
 import com.binchencoder.skylb.common.GoChannelPool;
+import com.binchencoder.skylb.common.GoChannelQueue;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.Endpoints;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointPort;
@@ -42,7 +43,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
@@ -98,13 +98,13 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   @Override
-  public LinkedBlockingDeque<EndpointsUpdate> addObserver(List<ServiceSpec> specs,
-      String clientAddr, Boolean resolveFull) {
+  public GoChannelQueue<EndpointsUpdate> addObserver(List<ServiceSpec> specs,
+      String clientAddr, Boolean resolveFull) throws InterruptedException {
     if (null == specs || specs.isEmpty()) {
       throw new StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(""));
     }
 
-    LinkedBlockingDeque<EndpointsUpdate> up = new LinkedBlockingDeque<>(
+    GoChannelQueue<EndpointsUpdate> up = new GoChannelQueue<>(
         ChanCapMultiplication * specs.size());
     for (ServiceSpec spec : specs) {
       LOGGER.info("Resolve service {}.{} on port name {} from client {}", spec.getNamespace(),
@@ -126,45 +126,38 @@ public class EndpointsHubImpl implements EndpointsHub {
       }
 
       String key = etcdClient.calculateKey(spec.getNamespace(), spec.getServiceName());
+      LOGGER.info("Received initial endpoints for client {}: {}.", clientAddr, eps);
+
+      Map<String, ServiceEndpoint> epsMap = this.skypbEndpointsToMap(spec, eps);
       ServiceObject so;
-      try {
-        LOGGER.info("Received initial endpoints for client {}: {}.", clientAddr, eps);
+      if (services.containsKey(key)) {
+        so = services.get(key);
+      } else {
+        so = new ServiceObject();
+        so.setServiceSpec(spec);
+        so.setEndpoints(epsMap);
 
-        Map<String, ServiceEndpoint> epsMap = this.skypbEndpointsToMap(spec, eps);
-        if (services.containsKey(key)) {
-          so = services.get(key);
-        } else {
-          so = new ServiceObject();
-          so.setServiceSpec(spec);
-          so.setEndpoints(epsMap);
+        services.put(key, so);
 
-          services.put(key, so);
-
-          if (!serverConfig.isWithInK8s()) {
-            // Periodically update the endpoints so that client gets a chance to rectify its endpoint list.
-            endpointExecutor.submit(new Runnable() {
-              @Override
-              public void run() {
-                new Timer(true).schedule(new TimerTask() {
-                  @Override
-                  public void run() {
-                    LOGGER.info("Automatic endpoints rectification for {}.", key);
-                    updateEndpoints(key);
-                  }
-                }, 0, serverConfig.getAutoRectifyInterval());
-              }
-            });
-          }
+        if (!serverConfig.isWithInK8s()) {
+          // Periodically update the endpoints so that client gets a chance to rectify its endpoint list.
+          endpointExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+              new Timer(true).schedule(new TimerTask() {
+                @Override
+                public void run() {
+                  LOGGER.info("Automatic endpoints rectification for {}.", key);
+                  updateEndpoints(key);
+                }
+              }, 0, serverConfig.getAutoRectifyInterval());
+            }
+          });
         }
-
-        up.offer(
-            new EndpointsUpdate(
-                endpointsUpdateAtomicLong.getAndIncrement(), diffEndpoints(spec, null, epsMap)));
-      } catch (Exception e) {
-        up.clear();
-
-        throw e;
       }
+
+      up.offer(new EndpointsUpdate(endpointsUpdateAtomicLong.getAndIncrement(),
+          diffEndpoints(spec, null, epsMap)));
 
       try {
         so.getReadWriteLock().writeLock().lock();
