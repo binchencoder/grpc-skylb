@@ -10,6 +10,7 @@ import com.binchencoder.skylb.hub.EndpointsHubImpl;
 import com.binchencoder.skylb.interceptors.HeaderInterceptor;
 import com.binchencoder.skylb.interceptors.HeaderServerInterceptor;
 import com.binchencoder.skylb.lameduck.LameDuck;
+import com.binchencoder.skylb.prefix.InitPrefix;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
@@ -55,6 +56,14 @@ public class SkyLbController {
     this.endpointsHub = endpointsHubImpl;
 
     this.lameDuck = new LameDuck(etcdClient);
+
+    // Initializes ETCD keys.
+    try {
+      new InitPrefix(etcdClient);
+    } catch (Exception e) {
+      LOGGER.error("Init prefix etcd key error", e);
+      return false;
+    }
 
     return true;
   }
