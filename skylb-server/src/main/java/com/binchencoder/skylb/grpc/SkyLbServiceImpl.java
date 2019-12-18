@@ -157,7 +157,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           Status.DATA_LOSS.withDescription("Failed to get peer client info from context."));
     }
     String hostString = remoteAddr.toString();
-    LOGGER.info("SkyLb server#resolve caller service {},  clientAddr: {}",
+    LOGGER.error("SkyLb server#resolve caller service {},  clientAddr: {}",
         request.getCallerServiceId(), hostString);
 
     List<ServiceSpec> specs = request.getServicesList();
@@ -165,10 +165,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       throw new StatusRuntimeException(
           Status.INVALID_ARGUMENT.withDescription("No service spec found."));
     }
-
-    for (ServiceSpec spec : specs) {
-      endpointsHub.trackServiceGraph(request, spec, remoteAddr);
-    }
+    // track service graph
+    this.trackServiceGraph(request, remoteAddr, specs);
 
     GoChannelQueue<EndpointsUpdate> endpointChannel;
     try {
@@ -189,7 +187,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
     }
 
     Timer timer = null;
-    TimerTask timeoutTask = null;
+    TimerTask disconnectTask = null;
     try {
       Map<String, Long> maxIds = Maps.newHashMap();
       for (ServiceSpec spec : specs) {
@@ -204,7 +202,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       }
 
       timer = new Timer();
-      timeoutTask = new TimerTask() {
+      disconnectTask = new TimerTask() {
         @Override
         public void run() {
           LOGGER.error("Auto disconnect with client, clientAddr: {}", hostString);
@@ -213,12 +211,12 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           endpointChannel.close(0);
         }
       };
-      timer.schedule(timeoutTask,
+      timer.schedule(disconnectTask,
           config.getFlagAutoDisconnTimeout() + random.nextInt(config.getFlagAutoDisconnTimeout()));
 
       EndpointsUpdate eu;
       while (null != (eu = endpointChannel.take())) {
-        LOGGER.info("SkyLb server #Resolve:  receive AddObserver notify chan {}.", eu.getId());
+        LOGGER.error("SkyLb server #Resolve:  receive AddObserver notify chan {}.", eu.getId());
         notifyChanUsageHistogram.observe(
             (float) (endpointChannel.size()) / ChanCapMultiplication / (float) (request
                 .getServicesCount()));
@@ -244,7 +242,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         final CountDownLatch respLatch = new CountDownLatch(1);
         try {
           responseObserver.onNext(resp);
-          LOGGER.info("responseObserver.onNext: {}", resp.toBuilder().build().toString());
+          LOGGER.error("responseObserver.onNext: clientAddr: {}, resp: {}", hostString,
+              resp.toBuilder().build().toString());
         } catch (Throwable t) {
           String errMsg = new Formatter().format(
               "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
@@ -272,7 +271,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         }
       }
 
-      LOGGER.error("responseObserver.onCompleted()");
+      LOGGER.error("responseObserver.onCompleted(), clientAddr: {}", hostString);
       responseObserver.onCompleted();
     } catch (InterruptedException e) {
       String errMsg = new Formatter().format(
@@ -282,8 +281,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       responseObserver.onError(new StatusRuntimeException(
           Status.INTERNAL.withDescription(errMsg)));
     } finally {
-      if (null != timeoutTask) {
-        timeoutTask.cancel();
+      if (null != disconnectTask) {
+        disconnectTask.cancel();
       }
       if (null != timer) {
         timer.purge();
@@ -367,8 +366,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
             responseObserver.onError(e);
           }
-
-//          responseObserver.onNext(ReportLoadResponse.newBuilder().build());
         }
 
         @Override
@@ -458,6 +455,13 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         LOGGER.info("Endpoints changed for caller service ID {} client {}.",
             request.getCallerServiceId(), remoteAddr.getHostString());
       }
+    }
+  }
+
+  private void trackServiceGraph(ResolveRequest request, InetSocketAddress remoteAddr,
+      List<ServiceSpec> specs) {
+    for (ServiceSpec spec : specs) {
+      endpointsHub.trackServiceGraph(request, spec, remoteAddr);
     }
   }
 
