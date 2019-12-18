@@ -2,22 +2,25 @@ package com.binchencoder.skylb.common;
 
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class GoChannelQueue<E> {
 
   private Timer timer;
 
-  private final LinkedBlockingQueue<E> buffer;
+  private final ConcurrentLinkedQueue<E> buffer;
   private boolean closed; // 不能写入也不能消费了
   private boolean stoped; // 停止写入队列, 还能继续消费
 
-  public GoChannelQueue() {
-    this.buffer = new LinkedBlockingQueue<>();
-  }
+  /** Lock held by take */
+  private final ReentrantLock takeLock = new ReentrantLock();
+  /** Wait queue for waiting takes */
+  private final Condition notEmpty = takeLock.newCondition();
 
-  public GoChannelQueue(int capacity) {
-    this.buffer = new LinkedBlockingQueue<>(capacity);
+  public GoChannelQueue() {
+    this.buffer = new ConcurrentLinkedQueue();
   }
 
   public boolean offer(E e) throws InterruptedException {
@@ -32,11 +35,18 @@ public class GoChannelQueue<E> {
   }
 
   public E take() throws InterruptedException {
-    if (this.closed) {
-      return null;
+    final ReentrantLock takeLock = this.takeLock;
+    takeLock.lockInterruptibly();
+    E data;
+    try {
+      while ((data = this.buffer.poll()) == null && !this.closed) {
+        notEmpty.await();
+      }
+    } finally {
+      takeLock.unlock();
     }
 
-    return this.buffer.take();
+    return data;
   }
 
   public int size() {
@@ -47,19 +57,33 @@ public class GoChannelQueue<E> {
     this.stoped = true;
     if (closeDelayInMs <= 0) {
       this.closed = true;
+      this.signalNotEmpty();
     } else {
       timer = new Timer();
       timer.schedule(new TimerTask() {
         @Override
         public void run() {
           closed = true;
+          signalNotEmpty();
           this.cancel();
-          return;
         }
       }, closeDelayInMs);
     }
 
     this.buffer.clear();
+  }
+
+  /**
+   * Signals a waiting take.
+   */
+  private void signalNotEmpty() {
+    final ReentrantLock takeLock = this.takeLock;
+    takeLock.lock();
+    try {
+      notEmpty.signal();
+    } finally {
+      takeLock.unlock();
+    }
   }
 
   @Override

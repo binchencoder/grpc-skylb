@@ -85,7 +85,7 @@ public class EtcdClient {
   public void refreshKey(final String key) throws ExecutionException, InterruptedException {
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(key), "Refresh the key should not be empty.");
-    LOGGER.info("Refresh the key[{}] with ttl[{}]", key, etcdConfig.getEtcdKeyTtl());
+    LOGGER.info("Refresh the key[{}] with ttl[{}]s", key, etcdConfig.getEtcdKeyTtl());
 
     ByteSequence byteKey = ByteSequence.from(key.getBytes());
     // get the CompletableFuture
@@ -115,7 +115,7 @@ public class EtcdClient {
                     ObjectReference.newBuilder().setNamespace(spec.getNamespace()).build())
                 .build()))
             .setPorts(Sets.newHashSet(EndpointPort.newBuilder()
-                .setName(spec.getNamespace())
+                .setName(spec.getPortName())
                 .setPort(port)
                 .build()))
             .build()

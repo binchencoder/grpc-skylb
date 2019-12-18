@@ -5,6 +5,9 @@ import java.util.WeakHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * https://stackoverflow.com/questions/22561110/equivalent-of-golang-channel-in-java
+ */
 public class GoChannelPool {
 
   private final static GoChannelPool defaultInstance = newPool();
@@ -15,13 +18,7 @@ public class GoChannelPool {
 
   public <T> GoChannel<T> newChannel() {
     GoChannel<T> channel = new GoChannel<>();
-    channelWeakHashMap.put(channel.getId(), new WeakReference<>(channel));
-    return channel;
-  }
-
-  public <T> GoChannel<T> newChannel(int capacityDeq) {
-    GoChannel<T> channel = new GoChannel<>(capacityDeq);
-    channelWeakHashMap.put(channel.getId(), new WeakReference<>(channel));
+    channelWeakHashMap.put(channel.getId(), new WeakReference<GoChannel>(channel));
     return channel;
   }
 
@@ -60,6 +57,7 @@ public class GoChannelPool {
     select(new GoSelectConsumer() {
       @Override
       void accept(GoChannelObject t) {
+
         WeakReference<GoChannel> goChannelWeakReference = channelWeakHashMap.get(t.channel_id);
         GoChannel channel = goChannelWeakReference != null ? goChannelWeakReference.get() : null;
         if (channel != null) {
@@ -69,11 +67,11 @@ public class GoChannelPool {
     });
   }
 
-  public class GoChannel<E> {
+  class GoChannel<E> {
 
     // Instance
     private final long id;
-    private final LinkedBlockingDeque<GoChannelObject<E>> buffer;
+    private final LinkedBlockingDeque<GoChannelObject<E>> buffer = new LinkedBlockingDeque<>();
 
     public GoChannel() {
       this(getSerialNumber());
@@ -81,12 +79,6 @@ public class GoChannelPool {
 
     private GoChannel(long id) {
       this.id = id;
-      this.buffer = new LinkedBlockingDeque<>();
-    }
-
-    private GoChannel(int capacityDeq) {
-      this.id = getSerialNumber();
-      this.buffer = new LinkedBlockingDeque<>(capacityDeq);
     }
 
     public long getId() {
@@ -122,14 +114,6 @@ public class GoChannelPool {
       return buffer.size();
     }
 
-    public void close() throws Throwable {
-      this.finalize();
-    }
-
-    public boolean isStoped() {
-      return !channelWeakHashMap.containsKey(getId());
-    }
-
     @Override
     protected void finalize() throws Throwable {
       super.finalize();
@@ -152,5 +136,4 @@ public class GoChannelPool {
 
     abstract void accept(GoChannelObject t);
   }
-
 }

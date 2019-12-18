@@ -1,6 +1,6 @@
 package com.binchencoder.skylb.hub.model;
 
-import com.binchencoder.skylb.common.GoChannelPool.GoChannel;
+import com.binchencoder.skylb.common.GoChannelQueue;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceEndpoints;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import java.util.concurrent.locks.Lock;
@@ -16,7 +16,7 @@ public class ClientObserver {
 
   private boolean closed;
 
-  private GoChannel<ServiceEndpoints> notifyCh;
+  private GoChannelQueue<ServiceEndpoints> notifyCh;
 
   public Lock getLock() {
     return lock;
@@ -46,12 +46,12 @@ public class ClientObserver {
     this.closed = closed;
   }
 
-  public GoChannel<ServiceEndpoints> getNotifyCh() {
+  public GoChannelQueue<ServiceEndpoints> getNotifyCh() {
     return notifyCh;
   }
 
   public void setNotifyCh(
-      GoChannel<ServiceEndpoints> notifyCh) {
+      GoChannelQueue<ServiceEndpoints> notifyCh) {
     this.notifyCh = notifyCh;
   }
 }

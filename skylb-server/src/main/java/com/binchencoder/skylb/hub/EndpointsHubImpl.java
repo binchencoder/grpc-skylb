@@ -20,14 +20,17 @@ import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceEndpoints;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdException;
+import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.grpc.Status;
@@ -39,6 +42,7 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -102,8 +106,7 @@ public class EndpointsHubImpl implements EndpointsHub {
       throw new StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(""));
     }
 
-    GoChannelQueue<EndpointsUpdate> up = new GoChannelQueue<>(
-        ChanCapMultiplication * specs.size());
+    GoChannelQueue<EndpointsUpdate> up = new GoChannelQueue<>();
     for (ServiceSpec spec : specs) {
       LOGGER.info("Resolve service {}.{} on port name {} from client {}", spec.getNamespace(),
           spec.getServiceName(), spec.getPortName(), clientAddr);
@@ -155,7 +158,7 @@ public class EndpointsHubImpl implements EndpointsHub {
       }
 
       up.offer(new EndpointsUpdate(endpointsUpdateAtomicLong.getAndIncrement(),
-          diffEndpoints(spec, null, epsMap)));
+          this.diffEndpoints(spec, null, epsMap)));
 
       try {
         so.getReadWriteLock().writeLock().lock();
@@ -214,7 +217,7 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   private Endpoints fetchEndpoints(String namespace,
-      String serviceName) throws StatusRuntimeException {
+      String serviceName) throws EtcdException {
     String key = etcdClient.calculateKey(namespace, serviceName);
     GetResponse resp;
     try {
@@ -222,9 +225,9 @@ public class EndpointsHubImpl implements EndpointsHub {
       resp = etcdClient.getKvClient()
           .get(bytesKey, GetOption.newBuilder().withPrefix(bytesKey).build()).get();
     } catch (Exception e) {
-      LOGGER.error("Etcd client get error, key: {}", key, e);
-      throw new StatusRuntimeException(
-          Status.UNAVAILABLE.withDescription("Etcd client get error, key:" + e));
+      LOGGER.error("Etcd client get key error, key: {}", key, e);
+      throw EtcdExceptionFactory
+          .newEtcdException(ErrorCode.UNAVAILABLE, "Etcd client get error, key:" + e);
     }
 
     if (resp.getCount() == 0) {
@@ -232,9 +235,52 @@ public class EndpointsHubImpl implements EndpointsHub {
       return Endpoints.getDefaultInstance();
     }
 
-    KeyValue kv = resp.getKvs().get(0);
-    String v = kv.getValue().toString(Charset.defaultCharset());
-    return new Gson().fromJson(v, Endpoints.class);
+    Endpoints endpoints;
+    List<KeyValue> kvs = resp.getKvs();
+    if (kvs.size() > 1) {
+      endpoints = Endpoints.newBuilder().build();
+      for (int i = 0; i < kvs.size(); i++) {
+        String v = kvs.get(i).getValue().toString(Charset.defaultCharset());
+        if (Strings.isNullOrEmpty(v)) {
+          continue;
+        }
+
+        Endpoints eps = this.unmarshalEndpoints(v);
+        if (i == 0) {
+          endpoints.setName(eps.getName());
+          endpoints.setNamespace(eps.getNamespace());
+//          endpoints.ObjectMeta = eps.ObjectMeta
+        }
+
+        for (Entry<String, String> e : eps.getLabels().entrySet()) {
+          if (null == endpoints.getLabels() || endpoints.getLabels().isEmpty()) {
+            endpoints.setLabels(Maps.newHashMap());
+          }
+          endpoints.getLabels().put(e.getKey(), e.getValue());
+        }
+        endpoints.getSubsets().addAll(eps.getSubsets());
+      }
+    } else {
+      KeyValue kv = resp.getKvs().get(0);
+      String v = kv.getValue().toString(Charset.defaultCharset());
+      if (Strings.isNullOrEmpty(v)) {
+        endpoints = Endpoints.newBuilder().build();
+      } else {
+        endpoints = this.unmarshalEndpoints(v);
+      }
+    }
+
+    return endpoints;
+  }
+
+  private Endpoints unmarshalEndpoints(String v) {
+    try {
+      return new Gson().fromJson(v, Endpoints.class);
+    } catch (JsonSyntaxException e) {
+      LOGGER.error("unmarshal endpoints error, v: {}", v, e);
+      throw EtcdExceptionFactory
+          .newEtcdException(ErrorCode.INTERNAL, "unmarshal endpoints error: " + e.getMessage());
+    }
   }
 
   private Map<String, ServiceEndpoint> skypbEndpointsToMap(ServiceSpec spec, Endpoints eps) {
@@ -253,7 +299,7 @@ public class EndpointsHubImpl implements EndpointsHub {
       for (EndpointAddress addr : s.getAddresses()) {
         ServiceEndpoint se = new ServiceEndpoint(addr.getIp(), port);
         String key = this.calculateWeightKey(addr.getIp(), port);
-        if (eps.getLabels().containsKey(key)) {
+        if (null != eps.getLabels() && eps.getLabels().containsKey(key)) {
           se.setWeight(Integer.valueOf(eps.getLabels().get(key)));
         }
         map.put(se.toString(), se);

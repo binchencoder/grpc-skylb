@@ -207,13 +207,10 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       timeoutTask = new TimerTask() {
         @Override
         public void run() {
-          LOGGER.info("Auto disconnect with client, clientAddr: {}", hostString);
+          LOGGER.error("Auto disconnect with client, clientAddr: {}", hostString);
           autoDisconnCounts.inc();
 
           endpointChannel.close(0);
-          // Channel has been closed.
-          LOGGER.info("responseObserver.onCompleted()");
-          responseObserver.onCompleted();
         }
       };
       timer.schedule(timeoutTask,
@@ -241,15 +238,13 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             .setSvcEndpoints(ServiceEndpoints.newBuilder()
                 .setSpec(eps.getSpec())
                 .addAllInstEndpoints(eps.getInstEndpointsList())
-//                .addInstEndpoints(InstanceEndpoint.newBuilder().setHost("127.0.0.1").setPort(11122))
                 .build())
             .build();
 
         final CountDownLatch respLatch = new CountDownLatch(1);
-//        CompletableFuture.runAsync(() -> {
         try {
           responseObserver.onNext(resp);
-          LOGGER.info("responseObserver.onNext: {}", resp.toBuilder().toString());
+          LOGGER.info("responseObserver.onNext: {}", resp.toBuilder().build().toString());
         } catch (Throwable t) {
           String errMsg = new Formatter().format(
               "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
@@ -260,7 +255,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         } finally {
           respLatch.countDown();
         }
-//        });
         try {
           respLatch.await(config.getFlagNotifyTimeout(), TimeUnit.SECONDS);
         } catch (InterruptedException ie) {
@@ -278,6 +272,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         }
       }
 
+      LOGGER.error("responseObserver.onCompleted()");
       responseObserver.onCompleted();
     } catch (InterruptedException e) {
       String errMsg = new Formatter().format(
@@ -296,7 +291,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       }
 
       this.removeObserver(request, remoteAddr, specs);
-      // untrack service graph
+      // un track service graph
       this.untrackServiceGraph(request, remoteAddr);
     }
   }
@@ -311,10 +306,10 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       throw new StatusRuntimeException(
           Status.DATA_LOSS.withDescription("Failed to get peer client info from context."));
     }
-    String hostAddr = remoteAddr.getAddress().getHostAddress();
-    LOGGER.info("SkyLb server#reportLoad Start accepting load report from {}.", hostAddr);
+    String clientHostAddr = remoteAddr.getAddress().getHostAddress();
+    LOGGER.info("SkyLb server#reportLoad Start accepting load report from {}.", clientHostAddr);
 
-    activeReporterGauge.labels(hostAddr).inc();
+    activeReporterGauge.labels(clientHostAddr).inc();
 
     boolean[] first = {true};
     try {
@@ -326,10 +321,10 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           reportLoadCounts.labels(label).inc();
 
           // Replace host name if fixed_host has been specified.
-          String fixHostAddr = hostAddr;
+          String fixHostAddr = clientHostAddr;
           if (!Strings.isNullOrEmpty(req.getFixedHost())) {
             fixHostAddr = req.getFixedHost();
-            LOGGER.info("Use fixed host {} instead of {}", fixHostAddr, hostAddr);
+            LOGGER.info("Use fixed host {} instead of {}", fixHostAddr, clientHostAddr);
           }
 
           if (first[0]) {
@@ -378,7 +373,15 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
         @Override
         public void onError(Throwable throwable) {
-          LOGGER.error("ReportLoadRequest streamObserver error", throwable.getCause());
+          if (throwable instanceof StatusRuntimeException) {
+            StatusRuntimeException sre = (StatusRuntimeException) throwable;
+            if (sre.getStatus().getCode() == Code.CANCELLED) {
+              LOGGER.warn("ReportLoad close stream on client[{}]", remoteAddr.toString(),
+                  throwable);
+              return;
+            }
+          }
+          LOGGER.error("ReportLoadRequest streamObserver error", throwable);
         }
 
         @Override
@@ -389,7 +392,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       };
 
     } finally {
-      activeReporterGauge.labels(hostAddr).dec();
+      activeReporterGauge.labels(clientHostAddr).dec();
     }
   }
 
