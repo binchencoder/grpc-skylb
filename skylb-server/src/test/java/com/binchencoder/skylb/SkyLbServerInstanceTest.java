@@ -2,8 +2,8 @@ package com.binchencoder.skylb;
 
 import static org.junit.Assert.assertTrue;
 
-import com.binchencoder.skylb.config.EtcdConfig;
 import com.binchencoder.skylb.config.ServerConfig;
+import com.binchencoder.skylb.etcd.EtcdClient.EtcdConfig;
 import org.junit.After;
 import org.junit.Before;
 

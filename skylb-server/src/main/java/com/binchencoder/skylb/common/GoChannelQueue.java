@@ -1,8 +1,10 @@
 package com.binchencoder.skylb.common;
 
+import com.google.common.collect.Sets;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -11,8 +13,8 @@ public class GoChannelQueue<E> {
   private Timer timer;
 
   private final ConcurrentLinkedQueue<E> buffer;
-  private boolean closed; // 不能写入也不能消费了
-  private boolean stoped; // 停止写入队列, 还能继续消费
+  private AtomicBoolean closed; // 不能写入也不能消费了
+  private AtomicBoolean stoped; // 停止写入队列, 还能继续消费
 
   /** Lock held by take */
   private final ReentrantLock takeLock = new ReentrantLock();
@@ -21,13 +23,19 @@ public class GoChannelQueue<E> {
 
   public GoChannelQueue() {
     this.buffer = new ConcurrentLinkedQueue();
+    this.stoped = new AtomicBoolean();
+    this.closed = new AtomicBoolean();
+  }
+
+  public GoChannelQueue(E... buffer) {
+    this.buffer = new ConcurrentLinkedQueue(Sets.newHashSet(buffer));
   }
 
   public boolean offer(E e) throws InterruptedException {
-    if (this.closed) {
+    if (this.closed.get()) {
       throw new InterruptedException("Send on closed queue.");
     }
-    if (this.stoped) {
+    if (this.stoped.get()) {
       throw new InterruptedException("The queue is stoped, cannot be offer.");
     }
 
@@ -35,11 +43,15 @@ public class GoChannelQueue<E> {
   }
 
   public E take() throws InterruptedException {
+    if (this.closed.get()) {
+      return null;
+    }
+
     final ReentrantLock takeLock = this.takeLock;
     takeLock.lockInterruptibly();
     E data;
     try {
-      while ((data = this.buffer.poll()) == null && !this.closed) {
+      while ((data = this.buffer.poll()) == null && !this.closed.get()) {
         notEmpty.await();
       }
     } finally {
@@ -53,24 +65,28 @@ public class GoChannelQueue<E> {
     return this.buffer.size();
   }
 
-  public synchronized void close(long closeDelayInMs) {
-    this.stoped = true;
-    if (closeDelayInMs <= 0) {
-      this.closed = true;
-      this.signalNotEmpty();
-    } else {
-      timer = new Timer();
-      timer.schedule(new TimerTask() {
-        @Override
-        public void run() {
-          closed = true;
-          signalNotEmpty();
-          this.cancel();
-        }
-      }, closeDelayInMs);
+  public synchronized boolean close(long closeDelayInMs) {
+    if (this.stoped.compareAndSet(false, true)) {
+      if (closeDelayInMs <= 0) {
+        this.closed.set(true);
+        this.signalNotEmpty();
+      } else {
+        timer = new Timer();
+        timer.schedule(new TimerTask() {
+          @Override
+          public void run() {
+            closed.set(true);
+            signalNotEmpty();
+            this.cancel();
+          }
+        }, closeDelayInMs);
+      }
+
+      return true;
     }
 
     this.buffer.clear();
+    return false;
   }
 
   /**

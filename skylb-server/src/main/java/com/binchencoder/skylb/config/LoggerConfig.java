@@ -4,7 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.common.base.Strings;
 
-@Parameters(separators = "=")
+@Parameters(separators = "=", commandNames = {"logger", "log"})
 public class LoggerConfig {
 
   @Parameter(names = {"--log-level", "-log-level"},

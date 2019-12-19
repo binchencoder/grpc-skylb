@@ -9,6 +9,7 @@ import com.binchencoder.skylb.config.LoggerConfig;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
+import com.binchencoder.skylb.hub.SkyLbGraphImpl;
 import com.binchencoder.skylb.svcutil.AppUtil;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
@@ -62,8 +63,10 @@ public class SkyLbStartup {
         .addObject(serverConfig)
         .addObject(loggerConfig)
         .addObject(SkyLbServiceImpl.config)
+        .addObject(SkyLbGraphImpl.config)
+//        .addCommand(EtcdClient.etcdConfig)
         .build();
-    commander.setProgramName("SkyLB", "SkyLB Server");
+    commander.setProgramName("skylb", "SkyLB Server");
     commander.parse(args);
     if (appConfig.getHelp()) {
       commander.usage();

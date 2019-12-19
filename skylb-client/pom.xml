@@ -101,21 +101,16 @@
         <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>simpleclient</artifactId>
-            <version>0.0.15</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>simpleclient_servlet</artifactId>
-            <version>0.0.15</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- Apache Commons -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.4</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- Import this if you need MonitorService -->

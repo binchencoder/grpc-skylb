@@ -122,6 +122,13 @@
 			<artifactId>simpleclient_servlet</artifactId>
 		</dependency>
 
+		<!-- Apache Commons -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<scope>compile</scope>
+		</dependency>
+
         <!-- Logging. -->
         <dependency>
             <groupId>org.slf4j</groupId>

@@ -10,6 +10,7 @@ import com.beust.jcommander.internal.Maps;
 import com.binchencoder.skylb.common.GoChannelQueue;
 import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsUpdate;
+import com.binchencoder.skylb.hub.SkyLbGraph;
 import com.binchencoder.skylb.lameduck.LameDuck;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseRequest;
 import com.binchencoder.skylb.proto.ClientProtos.DiagnoseResponse;
@@ -35,12 +36,11 @@ import java.net.InetSocketAddress;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +49,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
   private static final Logger LOGGER = LoggerFactory.getLogger(SkyLbServiceImpl.class);
 
   public static Config config = new Config();
-
-  private final Random random = new Random();
 
   private static final Gauge activeObserverGauge = Gauge.build()
       .namespace(NAMESPACE)
@@ -135,16 +133,13 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
   private final EndpointsHub endpointsHub;
   private final LameDuck lameDuck;
+  private final SkyLbGraph skyLbGraph;
 
-  public SkyLbServiceImpl(final EndpointsHub endpointsHub, final LameDuck lameDuck) {
+  public SkyLbServiceImpl(final EndpointsHub endpointsHub, final LameDuck lameDuck,
+      final SkyLbGraph skyLbGraph) {
     this.endpointsHub = endpointsHub;
     this.lameDuck = lameDuck;
-  }
-
-  private ExecutorService serviceGraphExecutor;
-
-  public void registerProcessor(ExecutorService serviceGraphExecutor) {
-    this.serviceGraphExecutor = serviceGraphExecutor;
+    this.skyLbGraph = skyLbGraph;
   }
 
   @Override
@@ -166,7 +161,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           Status.INVALID_ARGUMENT.withDescription("No service spec found."));
     }
     // track service graph
-    this.trackServiceGraph(request, remoteAddr, specs);
+    skyLbGraph.trackServiceGraph(request, remoteAddr);
 
     GoChannelQueue<EndpointsUpdate> endpointChannel;
     try {
@@ -211,8 +206,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           endpointChannel.close(0);
         }
       };
-      timer.schedule(disconnectTask,
-          config.getFlagAutoDisconnTimeout() + random.nextInt(config.getFlagAutoDisconnTimeout()));
+      timer.schedule(disconnectTask, config.getFlagAutoDisconnTimeout()
+          + RandomUtils.nextInt(0, config.getFlagAutoDisconnTimeout()));
 
       EndpointsUpdate eu;
       while (null != (eu = endpointChannel.take())) {
@@ -291,7 +286,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
       this.removeObserver(request, remoteAddr, specs);
       // un track service graph
-      this.untrackServiceGraph(request, remoteAddr);
+      skyLbGraph.untrackServiceGraph(request, remoteAddr);
     }
   }
 
@@ -420,7 +415,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         request.getCallerServiceId(), remoteAddr.toString());
     endpointsHub.removeObserver(specs, remoteAddr.toString());
     for (ServiceSpec spec : specs) {
-      endpointsHub.trackServiceGraph(request, spec, remoteAddr);
+      skyLbGraph.trackServiceGraph(request, spec, remoteAddr);
       activeObserverGauge
           .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).dec();
     }
@@ -456,21 +451,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             request.getCallerServiceId(), remoteAddr.getHostString());
       }
     }
-  }
-
-  private void trackServiceGraph(ResolveRequest request, InetSocketAddress remoteAddr,
-      List<ServiceSpec> specs) {
-    for (ServiceSpec spec : specs) {
-      endpointsHub.trackServiceGraph(request, spec, remoteAddr);
-    }
-  }
-
-  private void untrackServiceGraph(ResolveRequest request, InetSocketAddress remoteAddr) {
-    serviceGraphExecutor.submit(() -> {
-      for (ServiceSpec spec : request.getServicesList()) {
-        endpointsHub.untrackServiceGraph(request, spec, remoteAddr);
-      }
-    });
   }
 
   @Parameters(separators = "=")

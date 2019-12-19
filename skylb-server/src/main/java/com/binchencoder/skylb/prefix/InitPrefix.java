@@ -24,25 +24,27 @@ public class InitPrefix {
   // LameduckKey is the prefix of the ETCD key for lameduck endpoints.
   public static final String LAMEDUCK_KEY = "/grpc/lameduck/services/";
 
-  private EtcdClient etcdClient;
-  private InitPrefix ONECE_INSTANCE = null;
+  private static EtcdClient etcdClient = null;
+  private static InitPrefix ONECE_INSTANCE = null;
 
-  public InitPrefix(final EtcdClient etcdClient) {
+  private InitPrefix(EtcdClient etcdClient) {
+    this.etcdClient = etcdClient;
+  }
+
+  public static void newInstance(final EtcdClient etcdClient) {
     if (null == ONECE_INSTANCE) {
-      this.etcdClient = etcdClient;
-
-      this.ONECE_INSTANCE = new InitPrefix(etcdClient);
+      ONECE_INSTANCE = new InitPrefix(etcdClient);
 
       // Initializes ETCD keys.
-      this.mustExist(ENDPOINTS_KEY);
-      this.mustExist(GRAPH_KEY);
-      this.mustExist(LAMEDUCK_KEY);
+      mustExist(ENDPOINTS_KEY);
+      mustExist(GRAPH_KEY);
+      mustExist(LAMEDUCK_KEY);
     } else {
       LOGGER.warn("InitPrefix can only be initialized once.");
     }
   }
 
-  private void mustExist(String key) {
+  private static void mustExist(String key) {
     KV kvClient = etcdClient.getKvClient();
 
     ByteSequence byteKey = ByteSequence.from(key.getBytes());

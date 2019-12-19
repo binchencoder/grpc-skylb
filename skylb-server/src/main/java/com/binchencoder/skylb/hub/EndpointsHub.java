@@ -35,13 +35,5 @@ public interface EndpointsHub {
    */
   void upsertEndpoint(ServiceSpec spec, String host, int port, Integer weight);
 
-  /**
-   * Keeps track of dependency graph between clients and services.
-   */
-  void trackServiceGraph(ResolveRequest req, ServiceSpec callee, SocketAddress callerAddr);
-
-  /**
-   * Stops tracking of dependency graph between clients and services.
-   */
-  void untrackServiceGraph(ResolveRequest req, ServiceSpec callee, SocketAddress callerAddr);
+  void updateEndpoints(String key);
 }

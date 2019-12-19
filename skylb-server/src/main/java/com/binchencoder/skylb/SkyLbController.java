@@ -7,6 +7,8 @@ import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
 import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsHubImpl;
+import com.binchencoder.skylb.hub.SkyLbGraph;
+import com.binchencoder.skylb.hub.SkyLbGraphImpl;
 import com.binchencoder.skylb.interceptors.HeaderInterceptor;
 import com.binchencoder.skylb.interceptors.HeaderServerInterceptor;
 import com.binchencoder.skylb.lameduck.LameDuck;
@@ -32,6 +34,7 @@ public class SkyLbController {
 
   private EtcdClient etcdClient;
   private EndpointsHub endpointsHub;
+  private SkyLbGraph skyLbGraph;
   private LameDuck lameDuck;
 
   private Server server;
@@ -51,26 +54,20 @@ public class SkyLbController {
     this.serviceGraphExecutor = Executors
         .newSingleThreadExecutor(new ThreadFactoryImpl("ServiceGraphExecutorThread_"));
 
+    this.lameDuck = new LameDuck(etcdClient);
     EndpointsHubImpl endpointsHubImpl = new EndpointsHubImpl(etcdClient, serverConfig);
-    endpointsHubImpl.registerProcessor(endpointExecutor);
+    endpointsHubImpl.registerProcessor(endpointExecutor, lameDuck);
     this.endpointsHub = endpointsHubImpl;
 
-    this.lameDuck = new LameDuck(etcdClient);
-
-    // Initializes ETCD keys.
-    try {
-      new InitPrefix(etcdClient);
-    } catch (Exception e) {
-      LOGGER.error("Init prefix etcd key error", e);
-      return false;
-    }
+    SkyLbGraphImpl skyLbGraphImpl = new SkyLbGraphImpl(etcdClient);
+    skyLbGraphImpl.registerProcessor(serviceGraphExecutor);
+    this.skyLbGraph = skyLbGraphImpl;
 
     return true;
   }
 
   public void start() throws IOException {
-    SkyLbServiceImpl skyLbService = new SkyLbServiceImpl(endpointsHub, lameDuck);
-    skyLbService.registerProcessor(endpointExecutor);
+    SkyLbServiceImpl skyLbService = new SkyLbServiceImpl(endpointsHub, lameDuck, skyLbGraph);
 
     // Bind server interceptors
     final ServerBuilder<?> serverBuilder = ServerBuilder.forPort(serverConfig.getPort());
@@ -78,6 +75,14 @@ public class SkyLbController {
 
     this.server = serverBuilder.build().start();
     this.startDaemonAwaitThread();
+
+    // Initializes ETCD keys.
+    try {
+      InitPrefix.newInstance(etcdClient);
+    } catch (Exception e) {
+      LOGGER.error("Init prefix etcd key error", e);
+      this.shutdown();
+    }
   }
 
   public void shutdown() {

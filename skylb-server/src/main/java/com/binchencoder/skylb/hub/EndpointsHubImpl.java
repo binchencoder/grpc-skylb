@@ -1,5 +1,7 @@
 package com.binchencoder.skylb.hub;
 
+import static com.binchencoder.skylb.prefix.InitPrefix.ENDPOINTS_KEY;
+import static com.binchencoder.skylb.prefix.InitPrefix.LAMEDUCK_KEY;
 import static com.binchencoder.skylb.prometheus.PrometheusMetrics.NAMESPACE;
 import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
 
@@ -11,14 +13,16 @@ import com.binchencoder.skylb.etcd.Endpoints.EndpointPort;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset.EndpointAddress;
 import com.binchencoder.skylb.etcd.EtcdClient;
+import com.binchencoder.skylb.etcd.KeyUtil;
 import com.binchencoder.skylb.hub.model.ClientObject;
 import com.binchencoder.skylb.hub.model.ServiceEndpoint;
 import com.binchencoder.skylb.hub.model.ServiceObject;
+import com.binchencoder.skylb.lameduck.LameDuck;
 import com.binchencoder.skylb.proto.ClientProtos.InstanceEndpoint;
 import com.binchencoder.skylb.proto.ClientProtos.Operation;
-import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceEndpoints;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
+import com.binchencoder.skylb.utils.PathUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -28,15 +32,19 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
+import io.etcd.jetcd.Watch.Listener;
+import io.etcd.jetcd.common.exception.ClosedClientException;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
+import io.etcd.jetcd.options.WatchOption;
+import io.etcd.jetcd.watch.WatchEvent;
+import io.etcd.jetcd.watch.WatchResponse;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.prometheus.client.Gauge;
-import java.net.SocketAddress;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Formatter;
@@ -65,7 +73,6 @@ public class EndpointsHubImpl implements EndpointsHub {
 
   // ConcurrentHashMap ??
   private Map<String, ServiceObject> services = new ConcurrentHashMap<>();
-  private Map<String, String> graphKey = new ConcurrentHashMap();
 
   private static final Gauge addObserverGauge = Gauge.build()
       .namespace(NAMESPACE)
@@ -94,9 +101,21 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   private ExecutorService endpointExecutor;
+  private LameDuck lameDuck;
 
-  public void registerProcessor(ExecutorService endpointExecutor) {
+  public void registerProcessor(ExecutorService endpointExecutor, LameDuck lameDuck) {
     this.endpointExecutor = endpointExecutor;
+    this.lameDuck = lameDuck;
+
+    // Start watcher
+    if (this.serverConfig.isWithInK8s()) {
+      this.startK8sWatcher();
+    } else {
+      this.startMainWatcher();
+    }
+
+    // Start lame duck watcher
+    this.startLameDuckWatcher();
   }
 
   @Override
@@ -117,6 +136,7 @@ public class EndpointsHubImpl implements EndpointsHub {
       co.setServiceSpec(spec);
       co.setClientAddr(clientAddr);
       co.setResolveFull(resolveFull);
+      co.setNotifyChannel(up);
 
       Endpoints eps;
       if (serverConfig.isWithInK8s()) {
@@ -126,39 +146,46 @@ public class EndpointsHubImpl implements EndpointsHub {
         eps = this.fetchEndpoints(spec.getNamespace(), spec.getServiceName());
       }
 
-      String key = etcdClient.calculateKey(spec.getNamespace(), spec.getServiceName());
-      LOGGER.info("Received initial endpoints for client {}: {}.", clientAddr, eps);
-
-      Map<String, ServiceEndpoint> epsMap = this.skypbEndpointsToMap(spec, eps);
+      String key = KeyUtil.calculateKey(spec.getNamespace(), spec.getServiceName());
       ServiceObject so;
-      if (services.containsKey(key)) {
-        so = services.get(key);
-      } else {
-        so = new ServiceObject();
-        so.setServiceSpec(spec);
-        so.setEndpoints(epsMap);
+      try {
+        this.fairRWLock.writeLock().lock();
+        LOGGER.info("Received initial endpoints for client {}: {}.", clientAddr, eps);
 
-        services.put(key, so);
+        Map<String, ServiceEndpoint> epsMap = this.skypbEndpointsToMap(spec, eps);
+        if (services.containsKey(key)) {
+          so = services.get(key);
+        } else {
+          so = new ServiceObject();
+          so.setServiceSpec(spec);
+          so.setEndpoints(epsMap);
 
-        if (!serverConfig.isWithInK8s()) {
-          // Periodically update the endpoints so that client gets a chance to rectify its endpoint list.
-          endpointExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-              new Timer(true).schedule(new TimerTask() {
-                @Override
-                public void run() {
-                  LOGGER.info("Automatic endpoints rectification for {}.", key);
-                  updateEndpoints(key);
-                }
-              }, 0, serverConfig.getAutoRectifyInterval());
-            }
-          });
+          services.put(key, so);
+
+          if (!serverConfig.isWithInK8s()) {
+            // Periodically update the endpoints so that client gets a chance to rectify its endpoint list.
+            endpointExecutor.submit(() ->
+                new Timer(true).schedule(new TimerTask() {
+                  @Override
+                  public void run() {
+                    LOGGER.info("Automatic endpoints rectification for {}.", key);
+                    updateEndpoints(key);
+                  }
+                }, 0, serverConfig.getAutoRectifyInterval())
+            );
+          }
         }
-      }
 
-      up.offer(new EndpointsUpdate(endpointsUpdateAtomicLong.getAndIncrement(),
-          this.diffEndpoints(spec, null, epsMap)));
+        up.offer(new EndpointsUpdate(endpointsUpdateAtomicLong.getAndIncrement(),
+            this.diffEndpoints(spec, null, epsMap)));
+      } catch (Exception e) {
+        up.close(0);
+
+        LOGGER.error("Offer to EndpointsUpdate channel error", e);
+        throw e;
+      } finally {
+        this.fairRWLock.writeLock().unlock();
+      }
 
       try {
         so.getReadWriteLock().writeLock().lock();
@@ -178,7 +205,7 @@ public class EndpointsHubImpl implements EndpointsHub {
 
   @Override
   public void insertEndpoint(ServiceSpec spec, String host, int port, Integer weight) {
-    String key = etcdClient.calculateEndpointKey(spec.getNamespace(), spec.getServiceName(), host,
+    String key = KeyUtil.calculateEndpointKey(spec.getNamespace(), spec.getServiceName(), host,
         Integer.valueOf(port));
 
     try {
@@ -190,7 +217,7 @@ public class EndpointsHubImpl implements EndpointsHub {
 
   @Override
   public void upsertEndpoint(ServiceSpec spec, String host, int port, Integer weight) {
-    String key = etcdClient.calculateEndpointKey(spec.getNamespace(), spec.getServiceName(), host,
+    String key = KeyUtil.calculateEndpointKey(spec.getNamespace(), spec.getServiceName(), host,
         Integer.valueOf(port));
 
     try {
@@ -206,19 +233,165 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   @Override
-  public void trackServiceGraph(ResolveRequest req, ServiceSpec callee, SocketAddress callerAddr) {
+  public void updateEndpoints(String key) {
+    if (key.isEmpty()) {
+      return;
+    }
+
+    try {
+      fairRWLock.readLock().lock();
+      ServiceObject so = services.get(key);
+      if (null == so) {
+        LOGGER.warn("serviceObject nil for key [{}]", key);
+        return;
+      }
+
+      try {
+        Endpoints eps = this.fetchEndpoints(so.getServiceSpec().getNamespace(),
+            so.getServiceSpec().getServiceName());
+        this.applyEndpoints(so, eps);
+      } catch (StatusRuntimeException sre) {
+        LOGGER.error("Failed to fetch endpoints for service {}.{}: {}",
+            so.getServiceSpec().getNamespace(), so.getServiceSpec().getServiceName(), sre);
+        return;
+      }
+    } finally {
+      fairRWLock.readLock().unlock();
+    }
+  }
+
+  private void startK8sWatcher() {
+    // TODO(chenbin) implement it with in k8s
+  }
+
+  private void startMainWatcher() {
+    new Thread(this::runMainWatcher).start();
+  }
+
+  private void runMainWatcher() {
+    final ByteSequence bytesKey = ByteSequence.from(ENDPOINTS_KEY.getBytes());
+    // Watch etcd keys for all service endpoints and notify clients.
+    Listener listener = new Listener() {
+      @Override
+      public void onNext(WatchResponse response) {
+        // Watch etcd keys for all service endpoints and notify clients.
+        LOGGER.info("OnNext: watch endpoints key[{}], response:{}", ENDPOINTS_KEY, response);
+
+        List<WatchEvent> events = response.getEvents();
+        for (WatchEvent event : events) {
+          extractUpdates(event);
+        }
+      }
+
+      @Override
+      public void onError(Throwable throwable) {
+        LOGGER.error("OnError: watch endpoints key[{}]", ENDPOINTS_KEY, throwable);
+
+        runMainWatcher();
+      }
+
+      @Override
+      public void onCompleted() {
+        LOGGER.info("OnCompleted: watch endpoints key[{}]", ENDPOINTS_KEY);
+      }
+    };
+
+    try {
+      this.etcdClient.getWatchClient()
+          .watch(bytesKey, WatchOption.newBuilder().withPrefix(bytesKey).build(), listener);
+    } catch (ClosedClientException cce) {
+      try {
+        Thread.currentThread().sleep(1000l);
+      } catch (InterruptedException e) {
+        // Ignore error
+      }
+
+      LOGGER.error("Abandon watcher", cce);
+    }
+  }
+
+  // Starts a watcher to watch changes of lame duck.
+  private void startLameDuckWatcher() {
+    new Thread(this::runLameDuckWatcher).start();
+  }
+
+  private void runLameDuckWatcher() {
+    final ByteSequence bytesKey = ByteSequence.from(LAMEDUCK_KEY.getBytes());
+
+    GetResponse resp;
+    try {
+      resp = etcdClient.getKvClient()
+          .get(bytesKey, GetOption.newBuilder().withPrefix(bytesKey).build()).get();
+      this.lameDuck.extractLameduck(resp);
+    } catch (Exception e) {
+      LOGGER.error("Failed to load lameduck instances with key prefix {}", LAMEDUCK_KEY,
+          e);
+    }
+
+    // Load current lameduck endpoints.
+    Listener listener = new Listener() {
+      @Override
+      public void onNext(WatchResponse response) {
+        // Watch etcd keys for all service endpoints and notify clients.
+        LOGGER.info("OnNext: watch lameduck changed key[{}], response: {}", LAMEDUCK_KEY, response);
+
+        if (response.getEvents().size() == 0) {
+          return;
+        }
+        lameDuck.extractLameduckChange(response.getEvents());
+      }
+
+      @Override
+      public void onError(Throwable throwable) {
+        LOGGER.error("OnError: watch lameduck key[{}]", LAMEDUCK_KEY, throwable);
+
+        runLameDuckWatcher();
+      }
+
+      @Override
+      public void onCompleted() {
+        LOGGER.info("OnCompleted: watch lameduck key[{}]", LAMEDUCK_KEY);
+      }
+    };
+
+    try {
+      this.etcdClient.getWatchClient()
+          .watch(bytesKey, WatchOption.newBuilder().withPrefix(bytesKey).build(), listener);
+    } catch (ClosedClientException cce) {
+      try {
+        Thread.currentThread().sleep(1000l);
+      } catch (InterruptedException e) {
+        // Ignore error
+      }
+
+      LOGGER.error("Abandon watcher", cce);
+    }
+  }
+
+  private void startGraphTracking() {
 
   }
 
-  @Override
-  public void untrackServiceGraph(ResolveRequest req, ServiceSpec callee,
-      SocketAddress callerAddr) {
+  private void extractUpdates(WatchEvent event) {
+    String key = "";
+    switch (event.getEventType()) {
+      case PUT:
+        key = PathUtil.getPathPart(event.getKeyValue().getKey().toString(Charset.defaultCharset()));
+        break;
+      case DELETE:
+        key = PathUtil.getPathPart(event.getPrevKV().getKey().toString(Charset.defaultCharset()));
+        break;
+      default:
+        LOGGER.error("Unexpected action {}, ignore.", event.getEventType().name());
+        break;
+    }
 
+    this.updateEndpoints(key);
   }
 
   private Endpoints fetchEndpoints(String namespace,
       String serviceName) throws EtcdException {
-    String key = etcdClient.calculateKey(namespace, serviceName);
+    String key = KeyUtil.calculateKey(namespace, serviceName);
     GetResponse resp;
     try {
       ByteSequence bytesKey = ByteSequence.from(key.getBytes());
@@ -298,7 +471,7 @@ public class EndpointsHubImpl implements EndpointsHub {
       }
       for (EndpointAddress addr : s.getAddresses()) {
         ServiceEndpoint se = new ServiceEndpoint(addr.getIp(), port);
-        String key = this.calculateWeightKey(addr.getIp(), port);
+        String key = KeyUtil.calculateWeightKey(addr.getIp(), port);
         if (null != eps.getLabels() && eps.getLabels().containsKey(key)) {
           se.setWeight(Integer.valueOf(eps.getLabels().get(key)));
         }
@@ -323,7 +496,7 @@ public class EndpointsHubImpl implements EndpointsHub {
         InstanceEndpoint.Builder epBuilder = InstanceEndpoint.newBuilder()
             .setHost(addr.getIp())
             .setPort(port);
-        String key = this.calculateWeightKey(addr.getIp(), port);
+        String key = KeyUtil.calculateWeightKey(addr.getIp(), port);
         if (eps.getLabels().containsKey(key)) {
           epBuilder.setWeight(Integer.valueOf(eps.getLabels().get(key)));
         }
@@ -390,28 +563,6 @@ public class EndpointsHubImpl implements EndpointsHub {
         .build();
   }
 
-  private void updateEndpoints(String key) {
-    try {
-      fairRWLock.readLock().lock();
-      ServiceObject so = services.get(key);
-      if (null == so) {
-        LOGGER.warn("serviceObject nil for key {}", key);
-        return;
-      }
-
-      try {
-        this.fetchEndpoints(so.getServiceSpec().getNamespace(),
-            so.getServiceSpec().getServiceName());
-      } catch (StatusRuntimeException sre) {
-        LOGGER.error("Failed to fetch endpoints for service {}.{}: {}",
-            so.getServiceSpec().getNamespace(), so.getServiceSpec().getServiceName(), sre);
-        return;
-      }
-    } finally {
-      fairRWLock.readLock().unlock();
-    }
-  }
-
   private void applyEndpoints(ServiceObject so, Endpoints eps) {
     Preconditions.checkNotNull(so, "Parameter of so should be not null.");
 
@@ -428,12 +579,20 @@ public class EndpointsHubImpl implements EndpointsHub {
     }
 
     for (ClientObject observer : observers) {
+      endpointExecutor.submit(() -> {
+        if (fullEps.getInstEndpointsCount() == 0) {
+          return;
+        }
 
+        EndpointsUpdate up = new EndpointsUpdate(endpointsUpdateAtomicLong.getAndIncrement(),
+            fullEps);
+        try {
+          observer.getNotifyChannel().offer(up);
+        } catch (InterruptedException e) {
+          // Ignore error
+        }
+      });
     }
-  }
-
-  private String calculateWeightKey(String host, int port) {
-    return new Formatter().format("%s_%d_weight", host, port).toString();
   }
 
   private String formatServiceSpec(String namespace, String serviceName) {

@@ -1,5 +1,7 @@
 package com.binchencoder.skylb.etcd;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,6 +45,9 @@ public class Endpoints {
   private String namespace;
 
   public Set<EndpointSubset> getSubsets() {
+    if (this.subsets == null) {
+      this.subsets = Sets.newHashSet();
+    }
     return subsets;
   }
 
@@ -51,6 +56,9 @@ public class Endpoints {
   }
 
   public Map<String, String> getLabels() {
+    if (null == this.labels) {
+      this.labels = Maps.newHashMap();
+    }
     return labels;
   }
 

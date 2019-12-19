@@ -1,15 +1,11 @@
 package com.binchencoder.skylb.etcd;
 
-import static com.binchencoder.skylb.constants.EtcdConst.SEPARATOR;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
-import com.binchencoder.skylb.constants.EtcdConst;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointPort;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset.EndpointAddress;
-import com.binchencoder.skylb.prefix.InitPrefix;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -21,15 +17,12 @@ import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Lease;
 import io.etcd.jetcd.Watch;
-import io.etcd.jetcd.Watch.Listener;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
-import io.etcd.jetcd.options.WatchOption;
-import io.etcd.jetcd.watch.WatchResponse;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Set;
@@ -64,26 +57,6 @@ public class EtcdClient {
     Preconditions.checkNotNull(watchClient, "Failed to initialized watch client.");
     this.leaseClient = client.getLeaseClient();
     Preconditions.checkNotNull(leaseClient, "Failed to initialized lease client.");
-  }
-
-  private String calculateWeightKey(final String host, final int port) {
-    return new Formatter().format("%s_%d_weight", host, port).toString();
-  }
-
-  public String calculateKey(final String namespace, final String serviceName) {
-    return new StringBuilder(EtcdConst.ENDPOINTS_KEY)
-        .append(SEPARATOR).append(namespace)
-        .append(SEPARATOR).append(serviceName)
-        .toString();
-  }
-
-  public String calculateEndpointKey(final String namespace, final String serviceName,
-      final String host, final int port) {
-    return new StringBuilder(EtcdConst.ENDPOINTS_KEY)
-        .append(SEPARATOR).append(namespace)
-        .append(SEPARATOR).append(serviceName)
-        .append(SEPARATOR).append(new Formatter().format("%s_%d", host, port).toString())
-        .toString();
   }
 
   public void refreshKey(final String key) throws ExecutionException, InterruptedException {
@@ -132,7 +105,7 @@ public class EtcdClient {
         .build();
     if (weight != 0) {
       endpoints
-          .setLabels(Maps.newHashMap(calculateWeightKey(host, port),
+          .setLabels(Maps.newHashMap(KeyUtil.calculateWeightKey(host, port),
               new Formatter().format("%d", weight).toString()));
     }
 
@@ -141,37 +114,6 @@ public class EtcdClient {
     LOGGER.info("Etcd set key:{}, value:{} with leaseID[{}]", key, json, leaseID);
     return kvClient.put(ByteSequence.from(key.getBytes()), ByteSequence.from(json.getBytes()),
         PutOption.newBuilder().withLeaseId(leaseID).build());
-  }
-
-  // TODO(chenbin) implement it with in k8s
-  public void startK8sWatcher() {
-
-  }
-
-  public void startMainWatcher() {
-    new Thread(() -> {
-      for (; ; ) {
-        ByteSequence bytesKey = ByteSequence.from(InitPrefix.ENDPOINTS_KEY.getBytes());
-        watchClient.watch(bytesKey, WatchOption.newBuilder().withPrefix(bytesKey).build(),
-            new Listener() {
-              @Override
-              public void onNext(WatchResponse response) {
-                // Watch etcd keys for all service endpoints and notify clients.
-                LOGGER.info("Watched: {}", response);
-              }
-
-              @Override
-              public void onError(Throwable throwable) {
-                
-              }
-
-              @Override
-              public void onCompleted() {
-
-              }
-            });
-      }
-    });
   }
 
   public KV getKvClient() {
@@ -186,7 +128,7 @@ public class EtcdClient {
     return leaseClient;
   }
 
-  @Parameters(separators = "=")
+  @Parameters(separators = "=", commandNames = {"etcd"})
   public static class EtcdConfig {
 
     @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},
