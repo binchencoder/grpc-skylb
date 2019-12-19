@@ -1,15 +1,13 @@
 package com.binchencoder.skylb.hub;
 
 import com.binchencoder.skylb.common.GoChannelQueue;
-import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
-import java.net.SocketAddress;
 import java.util.List;
 
 /**
  * EndpointsHub defines the service endpoints hub based on etcd.
  */
-public interface EndpointsHub {
+public interface EndpointsHub extends AutoCloseable {
 
   int ChanCapMultiplication = 10;
 

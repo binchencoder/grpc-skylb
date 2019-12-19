@@ -4,7 +4,7 @@ import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import java.net.SocketAddress;
 
-public interface SkyLbGraph {
+public interface SkyLbGraph extends AutoCloseable {
 
   /**
    * Keeps track of dependency graph between clients and services.

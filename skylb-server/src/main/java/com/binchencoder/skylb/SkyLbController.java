@@ -1,7 +1,6 @@
 package com.binchencoder.skylb;
 
 import com.beust.jcommander.internal.Lists;
-import com.binchencoder.skylb.common.ThreadFactoryImpl;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
@@ -21,8 +20,6 @@ import io.grpc.ServerServiceDefinition;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,29 +36,15 @@ public class SkyLbController {
 
   private Server server;
 
-  private ExecutorService endpointExecutor;
-
-  private ExecutorService serviceGraphExecutor;
-
   public SkyLbController(ServerConfig serverConfig) {
     this.serverConfig = serverConfig;
   }
 
   public boolean initialize() {
     this.etcdClient = new EtcdClient();
-    this.endpointExecutor = Executors
-        .newCachedThreadPool(new ThreadFactoryImpl("EndpointExecutorThread_"));
-    this.serviceGraphExecutor = Executors
-        .newSingleThreadExecutor(new ThreadFactoryImpl("ServiceGraphExecutorThread_"));
-
     this.lameDuck = new LameDuck(etcdClient);
-    EndpointsHubImpl endpointsHubImpl = new EndpointsHubImpl(etcdClient, serverConfig);
-    endpointsHubImpl.registerProcessor(endpointExecutor, lameDuck);
-    this.endpointsHub = endpointsHubImpl;
-
-    SkyLbGraphImpl skyLbGraphImpl = new SkyLbGraphImpl(etcdClient);
-    skyLbGraphImpl.registerProcessor(serviceGraphExecutor);
-    this.skyLbGraph = skyLbGraphImpl;
+    this.endpointsHub = new EndpointsHubImpl(etcdClient, lameDuck, serverConfig);
+    this.skyLbGraph = new SkyLbGraphImpl(etcdClient);
 
     return true;
   }
@@ -88,11 +71,12 @@ public class SkyLbController {
   public void shutdown() {
     LOGGER.info("Shutting down gRPC server ...");
 
-    Optional.ofNullable(endpointExecutor).ifPresent(ExecutorService::shutdown);
-    LOGGER.info("Shutting down endpointExecutor ...");
-
-    Optional.ofNullable(serviceGraphExecutor).ifPresent(ExecutorService::shutdown);
-    LOGGER.info("Shutting down serviceGraphExecutor ...");
+    try {
+      this.endpointsHub.close();
+      this.skyLbGraph.close();
+    } catch (Exception e) {
+      LOGGER.error("AutoCloseable the resource error", e);
+    }
 
     Optional.ofNullable(server).ifPresent(Server::shutdown);
     LOGGER.info("gRPC server stopped.");

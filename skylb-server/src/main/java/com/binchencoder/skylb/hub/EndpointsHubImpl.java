@@ -7,6 +7,7 @@ import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
 
 import com.beust.jcommander.Parameters;
 import com.binchencoder.skylb.common.GoChannelQueue;
+import com.binchencoder.skylb.common.ThreadFactoryImpl;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.Endpoints;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointPort;
@@ -43,6 +44,7 @@ import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
 import io.etcd.jetcd.watch.WatchResponse;
 import io.grpc.Status;
+import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.prometheus.client.Gauge;
 import java.nio.charset.Charset;
@@ -51,12 +53,14 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
@@ -91,21 +95,17 @@ public class EndpointsHubImpl implements EndpointsHub {
       .register();
 
   private final EtcdClient etcdClient;
-
+  private LameDuck lameDuck;
   private final ServerConfig serverConfig;
+  private final ExecutorService endpointExecutor;
 
   // Constructor
-  public EndpointsHubImpl(EtcdClient etcdClient, ServerConfig serverConfig) {
+  public EndpointsHubImpl(EtcdClient etcdClient, LameDuck lameDuck, ServerConfig serverConfig) {
     this.etcdClient = etcdClient;
-    this.serverConfig = serverConfig;
-  }
-
-  private ExecutorService endpointExecutor;
-  private LameDuck lameDuck;
-
-  public void registerProcessor(ExecutorService endpointExecutor, LameDuck lameDuck) {
-    this.endpointExecutor = endpointExecutor;
     this.lameDuck = lameDuck;
+    this.serverConfig = serverConfig;
+    this.endpointExecutor = Executors
+        .newCachedThreadPool(new ThreadFactoryImpl("EndpointExecutorThread_"));
 
     // Start watcher
     if (this.serverConfig.isWithInK8s()) {
@@ -260,6 +260,12 @@ public class EndpointsHubImpl implements EndpointsHub {
     }
   }
 
+  @Override
+  public void close() throws Exception {
+    Optional.ofNullable(endpointExecutor).ifPresent(ExecutorService::shutdown);
+    LOGGER.info("Shutting down endpointExecutor ...");
+  }
+
   private void startK8sWatcher() {
     // TODO(chenbin) implement it with in k8s
   }
@@ -323,9 +329,17 @@ public class EndpointsHubImpl implements EndpointsHub {
       resp = etcdClient.getKvClient()
           .get(bytesKey, GetOption.newBuilder().withPrefix(bytesKey).build()).get();
       this.lameDuck.extractLameduck(resp);
-    } catch (Exception e) {
-      LOGGER.error("Failed to load lameduck instances with key prefix {}", LAMEDUCK_KEY,
-          e);
+    } catch (Throwable throwable) {
+      if (throwable.getCause().getCause() instanceof StatusRuntimeException) {
+        // Failed to connect etcd
+        StatusRuntimeException sre = (StatusRuntimeException) throwable.getCause().getCause();
+        if (sre.getStatus().getCode() == Code.UNAVAILABLE) {
+          LOGGER.error("Failed to connect etcd, will system out.", throwable);
+          System.exit(-3);
+        }
+      }
+
+      LOGGER.error("Failed to load lameduck instances with key prefix {}", LAMEDUCK_KEY, throwable);
     }
 
     // Load current lameduck endpoints.
@@ -366,10 +380,6 @@ public class EndpointsHubImpl implements EndpointsHub {
 
       LOGGER.error("Abandon watcher", cce);
     }
-  }
-
-  private void startGraphTracking() {
-
   }
 
   private void extractUpdates(WatchEvent event) {

@@ -128,7 +128,7 @@ public class EtcdClient {
     return leaseClient;
   }
 
-  @Parameters(separators = "=", commandNames = {"etcd"})
+  @Parameters(separators = "=", commandDescription = "Print etcd options")
   public static class EtcdConfig {
 
     @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},

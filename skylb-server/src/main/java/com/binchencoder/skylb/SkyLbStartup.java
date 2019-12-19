@@ -64,8 +64,10 @@ public class SkyLbStartup {
         .addObject(loggerConfig)
         .addObject(SkyLbServiceImpl.config)
         .addObject(SkyLbGraphImpl.config)
-//        .addCommand(EtcdClient.etcdConfig)
+        .addCommand("etcd", EtcdClient.etcdConfig, "etcd")
+        .addCommand("logger", loggerConfig, "log", "logging")
         .build();
+    commander.setCaseSensitiveOptions(false);
     commander.setProgramName("skylb", "SkyLB Server");
     commander.parse(args);
     if (appConfig.getHelp()) {
