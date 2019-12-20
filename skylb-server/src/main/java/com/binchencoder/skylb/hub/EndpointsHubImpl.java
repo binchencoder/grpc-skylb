@@ -237,25 +237,26 @@ public class EndpointsHubImpl implements EndpointsHub {
       return;
     }
 
+    ServiceObject so;
     try {
       fairRWLock.readLock().lock();
-      ServiceObject so = services.get(key);
-      if (null == so) {
-        LOGGER.warn("serviceObject nil for key [{}]", key);
-        return;
-      }
-
-      try {
-        Endpoints eps = this.fetchEndpoints(so.getServiceSpec().getNamespace(),
-            so.getServiceSpec().getServiceName());
-        this.applyEndpoints(so, eps);
-      } catch (StatusRuntimeException sre) {
-        LOGGER.error("Failed to fetch endpoints for service {}.{}: {}",
-            so.getServiceSpec().getNamespace(), so.getServiceSpec().getServiceName(), sre);
-        return;
-      }
+      so = services.get(key);
     } finally {
       fairRWLock.readLock().unlock();
+    }
+
+    if (null == so) {
+      LOGGER.warn("serviceObject nil for key [{}]", key);
+      return;
+    }
+
+    try {
+      Endpoints eps = this.fetchEndpoints(so.getServiceSpec().getNamespace(),
+          so.getServiceSpec().getServiceName());
+      this.applyEndpoints(so, eps);
+    } catch (StatusRuntimeException sre) {
+      LOGGER.error("Failed to fetch endpoints for service {}.{}: {}",
+          so.getServiceSpec().getNamespace(), so.getServiceSpec().getServiceName(), sre);
     }
   }
 
