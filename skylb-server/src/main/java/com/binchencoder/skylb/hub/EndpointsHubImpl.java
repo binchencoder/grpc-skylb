@@ -49,7 +49,6 @@ import io.grpc.StatusRuntimeException;
 import io.prometheus.client.Gauge;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -146,7 +145,7 @@ public class EndpointsHubImpl implements EndpointsHub {
         eps = this.fetchEndpoints(spec.getNamespace(), spec.getServiceName());
       }
 
-      String key = KeyUtil.calculateKey(spec.getNamespace(), spec.getServiceName());
+      String key = KeyUtil.calculateEndpointKey(spec.getNamespace(), spec.getServiceName());
       ServiceObject so;
       try {
         this.fairRWLock.writeLock().lock();
@@ -209,9 +208,9 @@ public class EndpointsHubImpl implements EndpointsHub {
         Integer.valueOf(port));
 
     try {
-      etcdClient.setKey(key, spec, host, port, weight);
+      etcdClient.setEndpointsKey(key, spec, host, port, weight);
     } catch (ExecutionException | InterruptedException e) {
-      LOGGER.error("EtcdClient#setKey error", e);
+      LOGGER.error("EtcdClient#setEndpointsKey error", e);
     }
   }
 
@@ -401,7 +400,7 @@ public class EndpointsHubImpl implements EndpointsHub {
 
   private Endpoints fetchEndpoints(String namespace,
       String serviceName) throws EtcdException {
-    String key = KeyUtil.calculateKey(namespace, serviceName);
+    String key = KeyUtil.calculateEndpointKey(namespace, serviceName);
     GetResponse resp;
     try {
       ByteSequence bytesKey = ByteSequence.from(key.getBytes());
@@ -606,7 +605,7 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   private String formatServiceSpec(String namespace, String serviceName) {
-    return new Formatter().format("%s.%s", namespace, serviceName).toString();
+    return String.format("%s.%s", namespace, serviceName);
   }
 
   @Parameters(separators = "=")

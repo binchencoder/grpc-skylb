@@ -40,7 +40,7 @@ public class EtcdClientTest extends SkyLbServerInstanceTest {
         .setNamespace("default")
         .setPortName("port")
         .build();
-    etcdClient.setKey(key, spec, "127.0.0.1", 1212, 0);
+    etcdClient.setEndpointsKey(key, spec, "127.0.0.1", 1212, 0);
   }
 
   @Test
@@ -51,7 +51,7 @@ public class EtcdClientTest extends SkyLbServerInstanceTest {
         .setNamespace("default")
         .setPortName("port")
         .build();
-    PutResponse putResp = etcdClient.setKey(key, spec, "127.0.0.1", 1213, 0).get();
+    PutResponse putResp = etcdClient.setEndpointsKey(key, spec, "127.0.0.1", 1213, 0).get();
     Assert.assertNull(putResp.getPrevKv());
 
     // Get the put key

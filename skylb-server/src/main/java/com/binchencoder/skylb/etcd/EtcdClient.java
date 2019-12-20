@@ -23,7 +23,6 @@ import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
-import java.util.Formatter;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -79,7 +78,7 @@ public class EtcdClient {
     }
   }
 
-  public CompletableFuture<PutResponse> setKey(final String key, final ServiceSpec spec,
+  public CompletableFuture<PutResponse> setEndpointsKey(final String key, final ServiceSpec spec,
       final String host, final int port, final int weight)
       throws ExecutionException, InterruptedException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(key), "Set the key must be not empty.");
@@ -100,13 +99,12 @@ public class EtcdClient {
 
     Endpoints endpoints = Endpoints.newBuilder()
         .setSubSets(subsets)
-        .setName(new Formatter().format("%s_%d", host, port).toString())
+        .setName(String.format("%s_%d", host, port))
         .setNamespace(spec.getNamespace())
         .build();
     if (weight != 0) {
-      endpoints
-          .setLabels(Maps.newHashMap(KeyUtil.calculateWeightKey(host, port),
-              new Formatter().format("%d", weight).toString()));
+      endpoints.setLabels(Maps.newHashMap(KeyUtil.calculateWeightKey(host, port),
+          String.format("%d", weight)));
     }
 
     long leaseID = leaseClient.grant(etcdConfig.getEtcdKeyTtl()).get().getID();
@@ -114,6 +112,22 @@ public class EtcdClient {
     LOGGER.info("Etcd set key:{}, value:{} with leaseID[{}]", key, json, leaseID);
     return kvClient.put(ByteSequence.from(key.getBytes()), ByteSequence.from(json.getBytes()),
         PutOption.newBuilder().withLeaseId(leaseID).build());
+  }
+
+  /**
+   * Put to etcd key value pair with ttl.
+   * @return #CompletableFuture<PutResponse>
+   * @throws ExecutionException
+   * @throws InterruptedException
+   */
+  public CompletableFuture<PutResponse> setKeyWithTtl(ByteSequence key, ByteSequence value,
+      long ttl) throws ExecutionException, InterruptedException {
+    Preconditions.checkArgument(key.getBytes().length > 0, "Set the key must be not empty.");
+
+    long leaseID = leaseClient.grant(ttl).get().getID();
+    LOGGER.info("Etcd set key with ttl:{}, value:{} with leaseID[{}]", key, value, leaseID);
+
+    return kvClient.put(key, value, PutOption.newBuilder().withLeaseId(leaseID).build());
   }
 
   public KV getKvClient() {
@@ -128,7 +142,7 @@ public class EtcdClient {
     return leaseClient;
   }
 
-  @Parameters(separators = "=", commandDescription = "Print etcd options")
+  @Parameters(separators = "=", commandNames = {"etcd"}, commandDescription = "Print etcd options")
   public static class EtcdConfig {
 
     @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},

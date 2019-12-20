@@ -1,7 +1,5 @@
 package com.binchencoder.skylb.trace.utils;
 
-import java.util.Formatter;
-
 /**
  * 工具类异常
  */
@@ -18,7 +16,7 @@ public class UtilException extends RuntimeException {
   }
 
   public UtilException(String messageTemplate, Object... params) {
-    super(new Formatter().format(messageTemplate, params).toString());
+    super(String.format(messageTemplate, params));
   }
 
   public UtilException(String message, Throwable throwable) {
@@ -26,7 +24,7 @@ public class UtilException extends RuntimeException {
   }
 
   public UtilException(Throwable throwable, String messageTemplate, Object... params) {
-    super(new Formatter().format(messageTemplate, params).toString(), throwable);
+    super(String.format(messageTemplate, params), throwable);
   }
 
   /**
@@ -39,7 +37,6 @@ public class UtilException extends RuntimeException {
     if (null == e) {
       return "null";
     }
-    return new Formatter()
-        .format("{}: {}", e.getClass().getSimpleName(), e.getMessage()).toString();
+    return String.format("{}: {}", e.getClass().getSimpleName(), e.getMessage());
   }
 }

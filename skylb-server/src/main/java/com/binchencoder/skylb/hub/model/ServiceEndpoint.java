@@ -1,7 +1,5 @@
 package com.binchencoder.skylb.hub.model;
 
-import java.util.Formatter;
-
 /**
  * ServiceEndpoint represents a service endpoint. (A simplified version of pb.InstanceEndpoint)
  */
@@ -47,6 +45,6 @@ public class ServiceEndpoint {
 
   @Override
   public String toString() {
-    return new Formatter().format("%s:%d", ip, port).toString();
+    return String.format("%s:%d", ip, port);
   }
 }

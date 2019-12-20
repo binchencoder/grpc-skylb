@@ -33,7 +33,6 @@ import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import java.net.InetSocketAddress;
-import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -152,7 +151,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           Status.DATA_LOSS.withDescription("Failed to get peer client info from context."));
     }
     String hostString = remoteAddr.toString();
-    LOGGER.error("SkyLb server#resolve caller service {},  clientAddr: {}",
+    LOGGER.debug("SkyLb server#resolve caller service {},  clientAddr: {}",
         request.getCallerServiceId(), hostString);
 
     List<ServiceSpec> specs = request.getServicesList();
@@ -173,9 +172,9 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).inc();
       }
 
-      String log = new Formatter()
+      String log = String
           .format("Failed to register caller service ID %d client %s to observe services",
-              request.getCallerServiceId(), remoteAddr.toString()).toString();
+              request.getCallerServiceId(), remoteAddr.toString());
       LOGGER.error(log, e);
       responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription(log)));
       return;
@@ -200,7 +199,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       disconnectTask = new TimerTask() {
         @Override
         public void run() {
-          LOGGER.error("Auto disconnect with client, clientAddr: {}", hostString);
+          LOGGER.warn("Auto disconnect with client, clientAddr: {}", hostString);
           autoDisconnCounts.inc();
 
           endpointChannel.close(0);
@@ -211,7 +210,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
       EndpointsUpdate eu;
       while (null != (eu = endpointChannel.take())) {
-        LOGGER.error("SkyLb server #Resolve:  receive AddObserver notify chan {}.", eu.getId());
         notifyChanUsageHistogram.observe(
             (float) (endpointChannel.size()) / ChanCapMultiplication / (float) (request
                 .getServicesCount()));
@@ -237,12 +235,12 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         final CountDownLatch respLatch = new CountDownLatch(1);
         try {
           responseObserver.onNext(resp);
-          LOGGER.error("responseObserver.onNext: clientAddr: {}, resp: {}", hostString,
+          LOGGER.debug("responseObserver.onNext: clientAddr: {}, resp: {}", hostString,
               resp.toBuilder().build().toString());
         } catch (Throwable t) {
-          String errMsg = new Formatter().format(
+          String errMsg = String.format(
               "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
-              request.getCallerServiceId(), remoteAddr.getHostString()).toString();
+              request.getCallerServiceId(), remoteAddr.getHostString());
           LOGGER.error(errMsg, t);
           responseObserver
               .onError(new StatusRuntimeException(Status.INTERNAL.withDescription(errMsg)));
@@ -266,12 +264,12 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         }
       }
 
-      LOGGER.error("responseObserver.onCompleted(), clientAddr: {}", hostString);
+      LOGGER.debug("responseObserver.onCompleted(), clientAddr: {}", hostString);
       responseObserver.onCompleted();
     } catch (InterruptedException e) {
-      String errMsg = new Formatter().format(
+      String errMsg = String.format(
           "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
-          request.getCallerServiceId(), hostString).toString();
+          request.getCallerServiceId(), hostString);
       LOGGER.error(errMsg, e);
       responseObserver.onError(new StatusRuntimeException(
           Status.INTERNAL.withDescription(errMsg)));
@@ -406,7 +404,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
   }
 
   private String formatServiceSpec(String nameSpace, String serviceName) {
-    return new Formatter().format("%s.%s", nameSpace, serviceName).toString();
+    return String.format("%s.%s", nameSpace, serviceName);
   }
 
   private void removeObserver(ResolveRequest request, InetSocketAddress remoteAddr,
@@ -430,8 +428,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           sb.append(", ");
         }
         InstanceEndpoint iep = eps.getInstEndpointsList().get(i);
-        sb.append(new Formatter()
-            .format("[%s]%s:%d", opToString(iep.getOp()), iep.getHost(), iep.getPort()));
+        sb.append(
+            String.format("[%s]%s:%d", opToString(iep.getOp()), iep.getHost(), iep.getPort()));
       }
       if (request.getResolveFullEndpoints()) {
         LOGGER.debug("Full endpoints of service {} for caller service ID %d client {}: {}.",

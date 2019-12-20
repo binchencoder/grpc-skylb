@@ -4,8 +4,10 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.binchencoder.skylb.common.ThreadFactoryImpl;
 import com.binchencoder.skylb.etcd.EtcdClient;
+import com.binchencoder.skylb.etcd.KeyUtil;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
+import io.etcd.jetcd.ByteSequence;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Optional;
@@ -13,8 +15,10 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +31,7 @@ public class SkyLbGraphImpl implements SkyLbGraph {
   private Timer timer;
 
   private Map<String, String> graphKey = new ConcurrentHashMap();
+  private final ReentrantReadWriteLock graphKeyLock = new ReentrantReadWriteLock();
 
   private final EtcdClient etcdClient;
   private final ExecutorService serviceGraphExecutor;
@@ -43,7 +48,42 @@ public class SkyLbGraphImpl implements SkyLbGraph {
 
   @Override
   public void trackServiceGraph(ResolveRequest req, ServiceSpec callee, SocketAddress callerAddr) {
+    LOGGER.info("TrackServiceGraph {}|{} --> {}", req.getCallerServiceId(),
+        req.getCallerServiceName(), callee);
 
+    String graphKey = KeyUtil
+        .calculateClientGraphKey(callee.getNamespace(), callee.getServiceName(),
+            req.getCallerServiceName());
+    LOGGER.info("etcd set graph key[{}]", graphKey);
+
+    try {
+      this.graphKeyLock.writeLock().lock();
+      this.graphKey.put(graphKey, "");
+    } finally {
+      this.graphKeyLock.writeLock().unlock();
+    }
+
+    long nowSeconds = System.currentTimeMillis() / 1000;
+    boolean succeeded = false;
+    for (int i = 0; i < 3; i++) {
+      try {
+        etcdClient.setKeyWithTtl(ByteSequence.from(graphKey.getBytes()),
+            ByteSequence.from(String.valueOf(nowSeconds).getBytes()),
+            config.getGraphKeyTtl());
+      } catch (ExecutionException | InterruptedException e) {
+        if (i == 2) {
+          LOGGER.warn("Save service graph key[{}] in etcd, error: ", graphKey, e);
+        }
+        continue;
+      }
+
+      succeeded = true;
+      break;
+    }
+
+    if (!succeeded) {
+      LOGGER.error("Failed to save service graph key[{}] in etcd for 3 times.", graphKey);
+    }
   }
 
   @Override
@@ -57,7 +97,17 @@ public class SkyLbGraphImpl implements SkyLbGraph {
   public void untrackServiceGraph(ResolveRequest req, SocketAddress callerAddr) {
     serviceGraphExecutor.submit(() -> {
       for (ServiceSpec spec : req.getServicesList()) {
-//        endpointsHub.untrackServiceGraph(request, spec, remoteAddr);
+        LOGGER.info("UntrackServiceGraph {}|{} --> {}", req.getCallerServiceId(),
+            req.getCallerServiceName(), spec);
+        String graphKey = KeyUtil
+            .calculateClientGraphKey(spec.getNamespace(), spec.getServiceName(),
+                req.getCallerServiceName());
+        try {
+          this.graphKeyLock.writeLock().lock();
+          this.graphKey.remove(graphKey);
+        } finally {
+          this.graphKeyLock.writeLock().unlock();
+        }
       }
     });
   }
@@ -78,10 +128,34 @@ public class SkyLbGraphImpl implements SkyLbGraph {
     timer.schedule(new TimerTask() {
       @Override
       public void run() {
-        // Clone the graph keys map.
-        Set<String> keys = graphKey.keySet();
+        // 只能在没有写锁的情况下读
+        Set<String> keys;
+        try {
+          graphKeyLock.readLock().lock();
+          keys = graphKey.keySet();
+        } finally {
+          graphKeyLock.readLock().unlock();
+        }
 
+        if (!keys.isEmpty()) {
+          long nowSeconds = System.currentTimeMillis() / 1000;
+          for (String key : keys) {
+            try {
+              etcdClient.setKeyWithTtl(ByteSequence.from(key.getBytes()),
+                  ByteSequence.from(String.valueOf(nowSeconds).getBytes()),
+                  config.getGraphKeyTtl());
+            } catch (ExecutionException | InterruptedException e) {
+              LOGGER.warn("Save service graph key {} in etcd err:", key, e);
+            }
 
+            // Throttle the traffic to ETCD to 20 keys/sec.
+            try {
+              Thread.currentThread().sleep(50);
+            } catch (InterruptedException e) {
+              // Ignore error
+            }
+          }
+        }
       }
     }, config.getGraphKeyInterval());
   }

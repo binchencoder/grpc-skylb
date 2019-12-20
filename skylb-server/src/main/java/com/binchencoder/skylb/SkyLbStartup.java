@@ -1,8 +1,7 @@
 package com.binchencoder.skylb;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 import com.binchencoder.skylb.common.ShutdownHookThread;
 import com.binchencoder.skylb.config.AppConfig;
 import com.binchencoder.skylb.config.LoggerConfig;
@@ -11,6 +10,7 @@ import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
 import com.binchencoder.skylb.hub.SkyLbGraphImpl;
 import com.binchencoder.skylb.svcutil.AppUtil;
+import com.binchencoder.skylb.utils.Logging;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,12 +64,24 @@ public class SkyLbStartup {
         .addObject(loggerConfig)
         .addObject(SkyLbServiceImpl.config)
         .addObject(SkyLbGraphImpl.config)
-        .addCommand("etcd", EtcdClient.etcdConfig, "etcd")
+        .addCommand(EtcdClient.etcdConfig)
         .addCommand("logger", loggerConfig, "log", "logging")
         .build();
     commander.setCaseSensitiveOptions(false);
-    commander.setProgramName("skylb", "SkyLB Server");
-    commander.parse(args);
+    commander.setProgramName("java -jar skylb.jar");
+    try {
+      commander.parse(args);
+    } catch (ParameterException e) {
+      e.getJCommander().getConsole().println("Parse args error: " + e.getMessage() + "\n");
+      commander.usage();
+      System.exit(1);
+    }
+
+    if (null != commander.getParsedCommand()) {
+      commander.getUsageFormatter().usage(commander.getParsedCommand());
+      System.exit(1);
+    }
+
     if (appConfig.getHelp()) {
       commander.usage();
       System.exit(1);
@@ -81,14 +93,17 @@ public class SkyLbStartup {
     }
 
     if (appConfig.isPrintLevel()) {
-      LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-      commander.getConsole().println(loggerContext.getLogger("root").getLevel().levelStr);
+      commander.getConsole().println(Logging.getLevel(Logger.ROOT_LOGGER_NAME).levelStr);
       System.exit(1);
     }
 
     if (loggerConfig.hasLoggerLevel()) {
-      LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-      loggerContext.getLogger("root").setLevel(Level.valueOf(loggerConfig.getLoggerLevel()));
+      Logging.setLevel(loggerConfig.getLoggerLevel());
+    }
+
+    // Whether to print the log to the console.
+    if (loggerConfig.logToStdout()) {
+      Logging.setLogToStdout();
     }
   }
 }
