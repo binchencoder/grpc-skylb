@@ -8,6 +8,7 @@ import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
 import com.beust.jcommander.Parameters;
 import com.binchencoder.skylb.common.GoChannelQueue;
 import com.binchencoder.skylb.common.ThreadFactoryImpl;
+import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.Endpoints;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointPort;
@@ -610,7 +611,11 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   @Parameters(separators = "=")
-  public static class Config {
+  public static class Config extends AbstractConfig {
 
+    @Override
+    public String toKeyValues() {
+      return "";
+    }
   }
 }

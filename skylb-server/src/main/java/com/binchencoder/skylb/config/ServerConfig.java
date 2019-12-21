@@ -5,7 +5,7 @@ import com.beust.jcommander.Parameters;
 import java.time.Duration;
 
 @Parameters(separators = "=")
-public class ServerConfig {
+public class ServerConfig extends AbstractConfig {
 
   @Parameter(names = {"--port", "-port"},
       description = "The gRPC server port, e.g., 1900")
@@ -45,5 +45,15 @@ public class ServerConfig {
 
   public long getAutoRectifyInterval() {
     return autoRectifyInterval.toMillis();
+  }
+
+  @Override
+  public String toKeyValues() {
+    return new StringBuilder()
+        .append("--port").append("=").append(this.getPort()).append("\n")
+        .append("--scrape-addr").append("=").append(this.getScrapeAddr()).append("\n")
+        .append("--within-k8s").append("=").append(this.isWithInK8s()).append("\n")
+        .append("--auto-rectify-interval").append("=").append(this.autoRectifyInterval.toString())
+        .toString();
   }
 }

@@ -6,7 +6,7 @@ import com.beust.jcommander.Parameters;
 import java.nio.file.Path;
 
 @Parameters(separators = "=", commandDescription = "Print logger options")
-public class LoggerConfig {
+public class LoggerConfig extends AbstractConfig {
 
   @Parameter(names = {"--log-level", "-log-level"},
       description = "The application logging level, e.g., ERROR, WARN, INFO, DEBUG, TRACE")
@@ -34,5 +34,14 @@ public class LoggerConfig {
 
   public Path getLogbackPath() {
     return logbackPath;
+  }
+
+  @Override
+  public String toKeyValues() {
+    return new StringBuilder()
+        .append("--log-level").append("=").append(this.getLoggerLevel().levelStr).append("\n")
+        .append("--log-to-stdout").append("=").append(this.logToStdout()).append("\n")
+        .append("--logback-path").append("=").append(this.getLogbackPath().toString())
+        .toString();
   }
 }

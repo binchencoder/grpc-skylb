@@ -3,6 +3,7 @@ package com.binchencoder.skylb.hub;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.binchencoder.skylb.common.ThreadFactoryImpl;
+import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.etcd.KeyUtil;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
@@ -162,7 +163,7 @@ public class SkyLbGraphImpl implements SkyLbGraph {
   }
 
   @Parameters(separators = "=")
-  public static class Config {
+  public static class Config extends AbstractConfig {
 
     @Parameter(names = {"--graph-key-ttl", "-graph-key-ttl"},
         description = "The service graph key TTL. e.g. 10m(10 Minutes), 24h(24Hours)")
@@ -178,6 +179,16 @@ public class SkyLbGraphImpl implements SkyLbGraph {
 
     public long getGraphKeyInterval() {
       return graphKeyInterval.toMillis();
+    }
+
+    @Override
+    public String toKeyValues() {
+      return new StringBuilder()
+          .append("--graph-key-ttl").append("=")
+          .append(this.graphKeyTtl.toString()).append("\n")
+          .append("--graph-key-interval").append("=")
+          .append(this.graphKeyInterval.toString())
+          .toString();
     }
   }
 }

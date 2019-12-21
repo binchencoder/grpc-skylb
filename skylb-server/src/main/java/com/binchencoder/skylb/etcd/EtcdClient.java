@@ -3,6 +3,7 @@ package com.binchencoder.skylb.etcd;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
+import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointPort;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset.EndpointAddress;
@@ -153,7 +154,7 @@ public class EtcdClient {
   }
 
   @Parameters(separators = "=", commandNames = {"etcd"}, commandDescription = "Print etcd options")
-  public static class EtcdConfig {
+  public static class EtcdConfig extends AbstractConfig {
 
     @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},
         description = "The comma separated ETCD endpoints. e.g., http://etcd1:2379,http://etcd2:2379")
@@ -177,6 +178,15 @@ public class EtcdClient {
 
     public void setEtcdKeyTtl(Duration etcdKeyTtl) {
       this.etcdKeyTtl = etcdKeyTtl;
+    }
+
+    @Override
+    public String toKeyValues() {
+      return new StringBuilder()
+          .append("--etcd-endpoints").append("=").append(this.getEndpoints().toString())
+          .append("\n")
+          .append("--etcd-key-ttl").append("=").append(this.etcdKeyTtl.toString())
+          .toString();
     }
   }
 }

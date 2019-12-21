@@ -8,6 +8,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
 import com.binchencoder.skylb.common.GoChannelQueue;
+import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsUpdate;
 import com.binchencoder.skylb.hub.SkyLbGraph;
@@ -452,7 +453,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
   }
 
   @Parameters(separators = "=")
-  public static class Config {
+  public static class Config extends AbstractConfig {
 
     @Parameter(names = {"--auto-disconn-timeout", "-auto-disconn-timeout"},
         description = "The timeout to automatically disconnect the resolve RPC. e.g. 10s(10 Seconds), 10m(10 Minutes)")
@@ -468,6 +469,16 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
     public long getFlagNotifyTimeout() {
       return flagNotifyTimeout.toMillis();
+    }
+
+    @Override
+    public String toKeyValues() {
+      return new StringBuilder()
+          .append("--auto-disconn-timeout").append("=")
+          .append(this.flagAutoDisconnTimeout.toString()).append("\n")
+          .append("--endpoints-notify-timeout").append("=")
+          .append(this.flagNotifyTimeout.toString())
+          .toString();
     }
   }
 }

@@ -5,6 +5,7 @@ import com.beust.jcommander.ParameterException;
 import com.binchencoder.common.DurationConverter.DurationConverterInstanceFactory;
 import com.binchencoder.common.LevelConverter.LevelConverterInstanceFactory;
 import com.binchencoder.skylb.common.ShutdownHookThread;
+import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.config.AppConfig;
 import com.binchencoder.skylb.config.LoggerConfig;
 import com.binchencoder.skylb.config.ServerConfig;
@@ -43,8 +44,8 @@ public class SkyLbStartup {
       controller.start();
 
       String tip =
-          "The SkyLB Server boot success. gRPC port=" + controller.getServerConfig().getPort();
-//      LOGGER.info(tip);
+          "The SkyLB Server boot successed. gRPC port=" + controller.getServerConfig().getPort();
+      LOGGER.info(tip);
       System.out.printf("%s%n", tip);
     } catch (Throwable e) {
       e.printStackTrace();
@@ -128,5 +129,12 @@ public class SkyLbStartup {
     if (loggerConfig.logToStdout()) {
       Logging.setLogToStdout();
     }
+
+    commander.getConsole().println("Start SKyLB Server ...");
+    commander.getConsole().println("JCommander: all parameters key and values");
+    for (Object ob : commander.getObjects()) {
+      commander.getConsole().println(((AbstractConfig) ob).toKeyValues());
+    }
+    commander.getConsole().println("");
   }
 }
