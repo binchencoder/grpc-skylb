@@ -131,7 +131,7 @@ public class SkyLbStartup {
     }
 
     commander.getConsole().println("Start SKyLB Server ...");
-    commander.getConsole().println("JCommander: all parameters key and values");
+    commander.getConsole().println("JCommander: list all parameters key and values");
     for (Object ob : commander.getObjects()) {
       commander.getConsole().println(((AbstractConfig) ob).toKeyValues());
     }
