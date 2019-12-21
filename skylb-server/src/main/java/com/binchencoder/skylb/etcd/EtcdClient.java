@@ -65,7 +65,7 @@ public class EtcdClient {
   public void refreshKey(final String key) throws ExecutionException, InterruptedException {
     Preconditions
         .checkArgument(!Strings.isNullOrEmpty(key), "Refresh the key should not be empty.");
-    LOGGER.info("Refresh the key[{}] with ttl[{}]s", key, etcdConfig.getEtcdKeyTtl());
+    LOGGER.info("Refresh the key[{}] with ttl[{}]", key, etcdConfig.etcdKeyTtl.toString());
 
     ByteSequence byteKey = ByteSequence.from(key.getBytes());
     // get the CompletableFuture
@@ -154,15 +154,15 @@ public class EtcdClient {
   }
 
   @Parameters(separators = "=", commandNames = {"etcd"}, commandDescription = "Print etcd options")
-  public static class EtcdConfig extends AbstractConfig {
+  private static class EtcdConfig extends AbstractConfig {
 
     @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},
         description = "The comma separated ETCD endpoints. e.g., http://etcd1:2379,http://etcd2:2379")
-    private List<String> endpoints = Lists.newArrayList("http://127.0.0.1:2379");
+    public List<String> endpoints = Lists.newArrayList("http://127.0.0.1:2379");
 
     @Parameter(names = {"--etcd-key-ttl", "-etcd-key-ttl"},
         description = "The etcd key time-to-live. e.g. 10s(10 Seconds), 10m(10 Minutes)")
-    private Duration etcdKeyTtl = Duration.ofSeconds(10);
+    public Duration etcdKeyTtl = Duration.ofSeconds(10);
 
     public List<String> getEndpoints() {
       return endpoints;
@@ -173,7 +173,7 @@ public class EtcdClient {
     }
 
     public long getEtcdKeyTtl() {
-      return etcdKeyTtl.toMillis();
+      return etcdKeyTtl.getSeconds();
     }
 
     public void setEtcdKeyTtl(Duration etcdKeyTtl) {
