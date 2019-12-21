@@ -6,7 +6,18 @@
     <artifactId>skylb-server</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
+
     <name>gRPC SkyLB Server</name>
+    <description>SkyLB Server: an external gRPC load balancer based on SkyDNS. Implemented in the Java language.</description>
+    <url>https://binchencoder.github.io</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <parent>
         <groupId>com.binchencoder.skylb</groupId>
@@ -37,11 +48,11 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Maven properties -->
-		<maven.test.skip>true</maven.test.skip>
+		    <maven.test.skip>true</maven.test.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <!-- Compiler settings properties -->
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <github.global.server>github</github.global.server>
 
@@ -65,7 +76,7 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
-		<!-- Zipkin -->
+		    <!-- Zipkin -->
         <dependency>
             <groupId>io.zipkin.zipkin2</groupId>
             <artifactId>zipkin</artifactId>
@@ -112,22 +123,22 @@
             <artifactId>googleapis-common-protos</artifactId>
         </dependency>
 
-		<!-- Prometheus -->
-		<dependency>
-			<groupId>io.prometheus</groupId>
-			<artifactId>simpleclient</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.prometheus</groupId>
-			<artifactId>simpleclient_servlet</artifactId>
-		</dependency>
+        <!-- Prometheus -->
+        <dependency>
+          <groupId>io.prometheus</groupId>
+          <artifactId>simpleclient</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>io.prometheus</groupId>
+          <artifactId>simpleclient_servlet</artifactId>
+        </dependency>
 
-		<!-- Apache Commons -->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<scope>compile</scope>
-		</dependency>
+        <!-- Apache Commons -->
+        <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-lang3</artifactId>
+          <scope>compile</scope>
+        </dependency>
 
         <!-- Logging. -->
         <dependency>
@@ -162,13 +173,13 @@
             <version>1.2</version>
         </dependency>
         <dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-test</artifactId>
-			<!--<scope>test</scope>-->
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-test</artifactId>
+            <scope>test</scope>
         </dependency>
-	</dependencies>
+	  </dependencies>
     <build>
-		<finalName>skylb</finalName>
+		    <finalName>skylb</finalName>
         <extensions>
             <extension>
                 <groupId>kr.motd.maven</groupId>

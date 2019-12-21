@@ -2,6 +2,7 @@ package com.binchencoder.skylb.config;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import java.time.Duration;
 
 @Parameters(separators = "=")
 public class ServerConfig {
@@ -19,8 +20,8 @@ public class ServerConfig {
   private boolean withInK8s = false;
 
   @Parameter(names = {"--auto-rectify-interval", "-auto-rectify-interval"},
-      description = "The interval of auto rectification in seconds.")
-  private int autoRectifyInterval = 60;
+      description = "The interval of auto rectification. e.g. 10s(10 Seconds), 10m(10 Minutes)")
+  private Duration autoRectifyInterval = Duration.ofSeconds(60);
 
   public int getPort() {
     return port;
@@ -42,7 +43,7 @@ public class ServerConfig {
     return withInK8s;
   }
 
-  public int getAutoRectifyInterval() {
-    return autoRectifyInterval * 1000;
+  public long getAutoRectifyInterval() {
+    return autoRectifyInterval.toMillis();
   }
 }

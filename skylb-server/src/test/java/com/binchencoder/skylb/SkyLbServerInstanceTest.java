@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.EtcdClient.EtcdConfig;
+import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Before;
 
@@ -16,7 +17,7 @@ public class SkyLbServerInstanceTest {
   @Before
   public void startup() throws Exception {
     serverConfig.setPort(9876);
-    etcdConfig.setEndpoints("http://192.168.47.16:2377");
+    etcdConfig.setEndpoints(Lists.newArrayList("http://192.168.47.16:2377"));
 
     skyLbController = new SkyLbController(serverConfig);
     boolean initResult = skyLbController.initialize();

@@ -9,10 +9,12 @@ import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset.EndpointAddress;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
+import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Lease;
@@ -23,6 +25,7 @@ import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -45,7 +48,7 @@ public class EtcdClient {
 
     LOGGER.info("Initializing the etcd client, etcd-endpoints: {}", etcdConfig.getEndpoints());
     // create client
-    Client client = Client.builder().endpoints(etcdConfig.getEndpoints()).build();
+    Client client = this.initClient();
     Preconditions.checkNotNull(client, "Failed to initialized etcd client.");
 
     // TODO(chenbin) 检查client是否连接成功
@@ -116,9 +119,8 @@ public class EtcdClient {
 
   /**
    * Put to etcd key value pair with ttl.
+   *
    * @return #CompletableFuture<PutResponse>
-   * @throws ExecutionException
-   * @throws InterruptedException
    */
   public CompletableFuture<PutResponse> setKeyWithTtl(ByteSequence key, ByteSequence value,
       long ttl) throws ExecutionException, InterruptedException {
@@ -142,30 +144,38 @@ public class EtcdClient {
     return leaseClient;
   }
 
+  private Client initClient() {
+    ClientBuilder clientBuilder = Client.builder();
+    for (String endpoint : etcdConfig.getEndpoints()) {
+      clientBuilder.endpoints(endpoint);
+    }
+    return clientBuilder.build();
+  }
+
   @Parameters(separators = "=", commandNames = {"etcd"}, commandDescription = "Print etcd options")
   public static class EtcdConfig {
 
     @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},
-        description = "The comma separated ETCD endpoints, e.g., http://etcd1:2379,http://etcd2:2379")
-    private String endpoints = "http://127.0.0.1:2379";
+        description = "The comma separated ETCD endpoints. e.g., http://etcd1:2379,http://etcd2:2379")
+    private List<String> endpoints = Lists.newArrayList("http://127.0.0.1:2379");
 
     @Parameter(names = {"--etcd-key-ttl", "-etcd-key-ttl"},
-        description = "The etcd key time-to-live in seconds")
-    private int etcdKeyTtl = 10;
+        description = "The etcd key time-to-live. e.g. 10s(10 Seconds), 10m(10 Minutes)")
+    private Duration etcdKeyTtl = Duration.ofSeconds(10);
 
-    public String getEndpoints() {
+    public List<String> getEndpoints() {
       return endpoints;
     }
 
-    public void setEndpoints(String endpoints) {
+    public void setEndpoints(List<String> endpoints) {
       this.endpoints = endpoints;
     }
 
-    public int getEtcdKeyTtl() {
-      return etcdKeyTtl;
+    public long getEtcdKeyTtl() {
+      return etcdKeyTtl.toMillis();
     }
 
-    public void setEtcdKeyTtl(int etcdKeyTtl) {
+    public void setEtcdKeyTtl(Duration etcdKeyTtl) {
       this.etcdKeyTtl = etcdKeyTtl;
     }
   }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-	<include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-	<include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+<!--	<include resource="org/springframework/boot/logging/logback/defaults.xml"/>-->
+<!--	<include resource="org/springframework/boot/logging/logback/console-appender.xml"/>-->
 
 	<!-- 定义日志文件的存储地址, 勿在LogBack的配置中使用相对路径 -->
 	<property name="LOG_PATH" value="./logs"/>

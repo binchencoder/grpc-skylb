@@ -9,6 +9,7 @@ import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import io.etcd.jetcd.ByteSequence;
 import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -164,19 +165,19 @@ public class SkyLbGraphImpl implements SkyLbGraph {
   public static class Config {
 
     @Parameter(names = {"--graph-key-ttl", "-graph-key-ttl"},
-        description = "The service graph key TTL in hours.")
-    private int graphKeyTtl = 24;
+        description = "The service graph key TTL. e.g. 10m(10 Minutes), 24h(24Hours)")
+    private Duration graphKeyTtl = Duration.ofHours(24);
 
     @Parameter(names = {"--graph-key-interval", "-graph-key-interval"},
-        description = "The service graph key update interval in hours.")
-    private int graphKeyInterval = 2;
+        description = "The service graph key update interval. e.g. 10m(10 Minutes), 24h(24Hours)")
+    private Duration graphKeyInterval = Duration.ofHours(2);
 
-    public int getGraphKeyTtl() {
-      return graphKeyTtl;
+    public long getGraphKeyTtl() {
+      return graphKeyTtl.toMillis();
     }
 
-    public int getGraphKeyInterval() {
-      return graphKeyInterval * 60 * 1000;
+    public long getGraphKeyInterval() {
+      return graphKeyInterval.toMillis();
     }
   }
 }

@@ -25,7 +25,24 @@
     <artifactId>grpc-skylb</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+
     <name>gRPC SkyLB</name>
+    <description>SkyLB Server: an external gRPC load balancer based on SkyDNS. Implemented in the Java language.</description>
+    <url>https://binchencoder.github.io</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:binchencoder/grpc-skylb.git</connection>
+        <developerConnection>scm:git:git@github.com:binchencoder/grpc-skylb.git</developerConnection>
+        <url>git@github.com:binchencoder/grpc-skylb.git</url>
+    </scm>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -59,8 +76,8 @@
         <maven.test.skip>false</maven.test.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <!-- Compiler settings properties -->
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <github.global.server>github</github.global.server>
 
@@ -73,8 +90,8 @@
         <org.slf4j.version>1.7.21</org.slf4j.version>
         <logback.version>1.1.7</logback.version>
 
-		<!-- Prometheus -->
-		<promethues.version>0.0.15</promethues.version>
+        <!-- Prometheus -->
+        <promethues.version>0.0.15</promethues.version>
     </properties>
 
     <modules>
@@ -180,7 +197,7 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
+                <version>${org.slf4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>

@@ -33,6 +33,7 @@ import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -206,7 +207,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         }
       };
       timer.schedule(disconnectTask, config.getFlagAutoDisconnTimeout()
-          + RandomUtils.nextInt(0, config.getFlagAutoDisconnTimeout()));
+          + RandomUtils.nextLong(0, config.getFlagAutoDisconnTimeout()));
 
       EndpointsUpdate eu;
       while (null != (eu = endpointChannel.take())) {
@@ -366,8 +367,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           if (throwable instanceof StatusRuntimeException) {
             StatusRuntimeException sre = (StatusRuntimeException) throwable;
             if (sre.getStatus().getCode() == Code.CANCELLED) {
-              LOGGER.warn("ReportLoad close stream on client[{}]", remoteAddr.toString(),
-                  throwable);
+              LOGGER.warn("ReportLoad close stream on client[{}]", remoteAddr.toString());
               return;
             }
           }
@@ -455,19 +455,19 @@ public class SkyLbServiceImpl extends SkylbImplBase {
   public static class Config {
 
     @Parameter(names = {"--auto-disconn-timeout", "-auto-disconn-timeout"},
-        description = "The timeout to automatically disconnect the resolve RPC in seconds.")
-    private int flagAutoDisconnTimeout = 5 * 60; // 5 minute
+        description = "The timeout to automatically disconnect the resolve RPC. e.g. 10s(10 Seconds), 10m(10 Minutes)")
+    private Duration flagAutoDisconnTimeout = Duration.ofMinutes(5); // 5 minute
 
     @Parameter(names = {"--endpoints-notify-timeout", "-endpoints-notify-timeout"},
-        description = "The timeout to notify client endpoints update in seconds.")
-    private int flagNotifyTimeout = 10;
+        description = "The timeout to notify client endpoints update. e.g. 10s(10 Seconds), 10m(10 Minutes)")
+    private Duration flagNotifyTimeout = Duration.ofSeconds(10);
 
-    public int getFlagAutoDisconnTimeout() {
-      return flagAutoDisconnTimeout * 1000;
+    public long getFlagAutoDisconnTimeout() {
+      return flagAutoDisconnTimeout.toMillis();
     }
 
-    public int getFlagNotifyTimeout() {
-      return flagNotifyTimeout;
+    public long getFlagNotifyTimeout() {
+      return flagNotifyTimeout.toMillis();
     }
   }
 }
