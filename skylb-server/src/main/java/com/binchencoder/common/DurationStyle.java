@@ -10,8 +10,7 @@ import java.util.regex.Pattern;
 /**
  * Duration format styles.
  *
- * @author Phillip Webb
- * @since 2.0.0
+ * @author binchencoder
  */
 public enum DurationStyle {
 

@@ -6,7 +6,6 @@ import com.beust.jcommander.IStringConverterInstanceFactory;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.BaseConverter;
-import com.beust.jcommander.converters.NoConverter;
 
 /**
  * Convert a string to an Level.
