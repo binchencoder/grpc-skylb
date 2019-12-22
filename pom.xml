@@ -92,6 +92,9 @@
 
         <!-- Prometheus -->
         <promethues.version>0.0.15</promethues.version>
+
+        <!-- Spark -->
+        <spark-core.version>2.7.2</spark-core.version>
     </properties>
 
     <modules>
@@ -194,7 +197,7 @@
             <dependency>
                 <groupId>com.sparkjava</groupId>
                 <artifactId>spark-core</artifactId>
-                <version>2.5</version>
+                <version>${spark-core.version}</version>
                 <scope>provided</scope>
                 <optional>true</optional>
             </dependency>
