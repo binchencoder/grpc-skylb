@@ -47,7 +47,7 @@ public class SkyLbHTTPServer {
 
     thread.setDaemon(true);
     thread.start();
-    LOGGER.info("SkyLB metrics http server started on host{}:port{} ",
+    LOGGER.info("SkyLB metrics http server started on host:port => {}:{} ",
         httpBindAddress.getHostAddress(), port);
   }
 
