@@ -198,13 +198,7 @@
             <artifactId>junit</artifactId>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-            <version>9.4.24.v20191120</version>
-            <scope>compile</scope>
-        </dependency>
-        <!--        <dependency>-->
+<!--        <dependency>-->
 <!--          <groupId>org.springframework.boot</groupId>-->
 <!--          <artifactId>spring-boot-starter-test</artifactId>-->
 <!--          <scope>test</scope>-->
