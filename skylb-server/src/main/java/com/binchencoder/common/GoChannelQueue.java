@@ -1,4 +1,4 @@
-package com.binchencoder.skylb.common;
+package com.binchencoder.common;
 
 import com.google.common.collect.Sets;
 import java.util.Timer;

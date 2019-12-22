@@ -7,7 +7,7 @@ import io.grpc.ForwardingClientCall;
 import io.grpc.Metadata;
 
 /**
- * A {@link SimpleForwardingClientCall} which increments prometheus counters for
+ * A {@link SimpleForwardingClientCall} which increments monitoring counters for
  * the rpc call.
  */
 class MetricsClientCall<R, S> extends ForwardingClientCall.SimpleForwardingClientCall<R, S> {

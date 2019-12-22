@@ -1,6 +1,6 @@
 package com.binchencoder.skylb.hub.model;
 
-import com.binchencoder.skylb.common.GoChannelQueue;
+import com.binchencoder.common.GoChannelQueue;
 import com.binchencoder.skylb.hub.EndpointsUpdate;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 

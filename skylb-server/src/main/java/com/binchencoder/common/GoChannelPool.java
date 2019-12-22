@@ -1,4 +1,4 @@
-package com.binchencoder.skylb.common;
+package com.binchencoder.common;
 
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
@@ -67,7 +67,7 @@ public class GoChannelPool {
     });
   }
 
-  class GoChannel<E> {
+  public class GoChannel<E> {
 
     // Instance
     private final long id;

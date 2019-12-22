@@ -1,4 +1,4 @@
-package com.binchencoder.common;
+package com.binchencoder.common.jcommander;
 
 import com.google.common.base.Preconditions;
 import java.time.Duration;

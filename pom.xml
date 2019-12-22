@@ -175,14 +175,20 @@
                 <version>${promethues.version}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>simpleclient_dropwizard</artifactId>
+                <version>${promethues.version}</version>
+                <scope>provided</scope>
+            </dependency>
 
-			<!-- Apache Commons -->
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-lang3</artifactId>
-				<version>3.4</version>
-				<scope>provided</scope>
-			</dependency>
+            <!-- Apache Commons -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.4</version>
+                <scope>provided</scope>
+            </dependency>
 
             <!-- Import this if you need MonitorService -->
             <dependency>

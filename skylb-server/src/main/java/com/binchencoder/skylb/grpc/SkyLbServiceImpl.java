@@ -1,13 +1,13 @@
 package com.binchencoder.skylb.grpc;
 
 import static com.binchencoder.skylb.hub.EndpointsHub.ChanCapMultiplication;
-import static com.binchencoder.skylb.prometheus.PrometheusMetrics.NAMESPACE;
-import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
+import static com.binchencoder.skylb.monitoring.PrometheusMetrics.NAMESPACE;
+import static com.binchencoder.skylb.monitoring.PrometheusMetrics.SUBSYSTEM;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Maps;
-import com.binchencoder.skylb.common.GoChannelQueue;
+import com.binchencoder.common.GoChannelQueue;
 import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.hub.EndpointsHub;
 import com.binchencoder.skylb.hub.EndpointsUpdate;

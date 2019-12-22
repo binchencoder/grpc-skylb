@@ -23,7 +23,7 @@ public class EtcdClientTest extends SkyLbServerInstanceTest {
 
   @Before
   public void before() {
-    etcdClient = skyLbController.getEtcdClient();
+    etcdClient = skyLbContext.getEtcdClient();
   }
 
   @Test(expected = EtcdException.class)

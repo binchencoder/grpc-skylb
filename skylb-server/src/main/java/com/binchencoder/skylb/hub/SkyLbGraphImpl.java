@@ -2,7 +2,7 @@ package com.binchencoder.skylb.hub;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.binchencoder.skylb.common.ThreadFactoryImpl;
+import com.binchencoder.common.ThreadFactoryImpl;
 import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.etcd.KeyUtil;

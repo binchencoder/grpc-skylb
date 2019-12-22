@@ -1,4 +1,4 @@
-package com.binchencoder.skylb.common;
+package com.binchencoder.common;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;

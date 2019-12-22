@@ -43,7 +43,7 @@ public final class Logging {
     rootLogger.addAppender(ca);
   }
 
-  public static void configureLogback(InputStream is) {
+  public static void configureLogback(InputStream is) throws JoranException {
     Preconditions.checkNotNull(null != is);
     LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
     JoranConfigurator configurator = new JoranConfigurator();
@@ -53,7 +53,7 @@ public final class Logging {
       configurator.doConfigure(is);
     } catch (JoranException e) {
       e.printStackTrace();
-      System.exit(1);
+      throw e;
     }
   }
 }

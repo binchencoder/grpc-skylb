@@ -1,5 +1,6 @@
-package com.binchencoder.skylb.common;
+package com.binchencoder.common;
 
+import com.binchencoder.common.GoChannelPool;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Timer;
@@ -113,14 +114,14 @@ public class GoChannelPoolTest {
     final int finalTimes = times;
 //    executorService.submit(() -> {
     for (int i = 0; i < 10; i++) {
-        numberCh.offer(i);
+      numberCh.offer(i);
 
 //        try {
 //          Thread.sleep((long) (Math.random() * 10));
 //        } catch (InterruptedException e) {
 //          e.printStackTrace();
 //        }
-      }
+    }
 //    });
     executorService.submit(() -> {
       for (int i = 0; i < finalTimes; i++) {

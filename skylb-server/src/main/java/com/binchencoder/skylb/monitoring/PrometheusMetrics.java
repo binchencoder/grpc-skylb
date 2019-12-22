@@ -1,11 +1,11 @@
-package com.binchencoder.skylb.prometheus;
+package com.binchencoder.skylb.monitoring;
 
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility functions for prometheus.
+ * Utility functions for monitoring.
  */
 public class PrometheusMetrics {
 

@@ -1,6 +1,6 @@
 package com.binchencoder.skylb.hub;
 
-import com.binchencoder.skylb.common.GoChannelQueue;
+import com.binchencoder.common.GoChannelQueue;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import java.util.List;
 

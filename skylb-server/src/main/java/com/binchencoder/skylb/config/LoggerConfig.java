@@ -8,6 +8,8 @@ import java.nio.file.Path;
 @Parameters(separators = "=", commandDescription = "Print logger options")
 public class LoggerConfig extends AbstractConfig {
 
+  public static final String DEFAULT_LOGBACK_FILE = "config/logback.xml";
+
   @Parameter(names = {"--log-level", "-log-level"},
       description = "The application logging level, e.g., ERROR, WARN, INFO, DEBUG, TRACE")
   private Level loggerLevel = Level.DEBUG;
@@ -41,7 +43,9 @@ public class LoggerConfig extends AbstractConfig {
     return new StringBuilder()
         .append("--log-level").append("=").append(this.getLoggerLevel().levelStr).append("\n")
         .append("--log-to-stdout").append("=").append(this.logToStdout()).append("\n")
-        .append("--logback-path").append("=").append(this.getLogbackPath().toString())
+        .append("--logback-path").append("=")
+        .append(null == this.getLogbackPath() ? DEFAULT_LOGBACK_FILE
+            : this.getLogbackPath().toString())
         .toString();
   }
 }

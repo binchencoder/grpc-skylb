@@ -1,5 +1,6 @@
 package com.binchencoder.common;
 
+import com.binchencoder.common.jcommander.DurationStyle;
 import org.junit.Assert;
 import org.junit.Test;
 

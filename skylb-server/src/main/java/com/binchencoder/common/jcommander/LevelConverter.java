@@ -1,4 +1,4 @@
-package com.binchencoder.common;
+package com.binchencoder.common.jcommander;
 
 import ch.qos.logback.classic.Level;
 import com.beust.jcommander.IStringConverter;

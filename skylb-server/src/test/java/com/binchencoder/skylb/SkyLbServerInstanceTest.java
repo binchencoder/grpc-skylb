@@ -1,35 +1,24 @@
 package com.binchencoder.skylb;
 
-import static org.junit.Assert.assertTrue;
-
-import com.binchencoder.skylb.config.ServerConfig;
-import com.binchencoder.skylb.etcd.EtcdClient.EtcdConfig;
-import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Before;
 
 public class SkyLbServerInstanceTest {
 
-  protected SkyLbController skyLbController;
-  protected EtcdConfig etcdConfig = new EtcdConfig();
-  protected ServerConfig serverConfig = new ServerConfig();
+  protected SkyLbContext skyLbContext;
 
   @Before
   public void startup() throws Exception {
-    serverConfig.setPort(9876);
-    etcdConfig.setEndpoints(Lists.newArrayList("http://192.168.47.16:2377"));
+    skyLbContext = new SkyLbContext(
+        new String[]{"--etcd-endpoints=http://192.168.47.16:2377", "--port=9876"});
 
-    skyLbController = new SkyLbController(serverConfig);
-    boolean initResult = skyLbController.initialize();
-    assertTrue(initResult);
-
-    skyLbController.start();
+    skyLbContext.start();
   }
 
   @After
   public void shutdown() throws Exception {
-    if (skyLbController != null) {
-      skyLbController.shutdown();
+    if (skyLbContext != null) {
+      skyLbContext.terminate();
     }
     //maybe need to clean the file store. But we do not suggest deleting anything.
   }

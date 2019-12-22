@@ -1,13 +1,13 @@
 package com.binchencoder.skylb.hub;
 
+import static com.binchencoder.skylb.monitoring.PrometheusMetrics.NAMESPACE;
+import static com.binchencoder.skylb.monitoring.PrometheusMetrics.SUBSYSTEM;
 import static com.binchencoder.skylb.prefix.InitPrefix.ENDPOINTS_KEY;
 import static com.binchencoder.skylb.prefix.InitPrefix.LAMEDUCK_KEY;
-import static com.binchencoder.skylb.prometheus.PrometheusMetrics.NAMESPACE;
-import static com.binchencoder.skylb.prometheus.PrometheusMetrics.SUBSYSTEM;
 
 import com.beust.jcommander.Parameters;
-import com.binchencoder.skylb.common.GoChannelQueue;
-import com.binchencoder.skylb.common.ThreadFactoryImpl;
+import com.binchencoder.common.GoChannelQueue;
+import com.binchencoder.common.ThreadFactoryImpl;
 import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.Endpoints;

@@ -1,4 +1,4 @@
-package com.binchencoder.common;
+package com.binchencoder.common.jcommander;
 
 import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.IStringConverterInstanceFactory;

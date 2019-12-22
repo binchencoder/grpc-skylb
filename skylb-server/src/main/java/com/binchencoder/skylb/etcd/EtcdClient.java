@@ -154,7 +154,7 @@ public class EtcdClient {
   }
 
   @Parameters(separators = "=", commandNames = {"etcd"}, commandDescription = "Print etcd options")
-  private static class EtcdConfig extends AbstractConfig {
+  public static class EtcdConfig extends AbstractConfig {
 
     @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},
         description = "The comma separated ETCD endpoints. e.g., http://etcd1:2379,http://etcd2:2379")

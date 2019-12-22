@@ -51,7 +51,7 @@ public class MonitorService {
     ipAddress(ipaddr);
     port(port);
 
-    // prometheus metrics initialization.
+    // monitoring metrics initialization.
     get(path, new Route() {
       @Override
       public Object handle(Request req, Response res) throws Exception {

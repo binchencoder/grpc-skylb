@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.binchencoder.skylb.common;
+package com.binchencoder.common;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
