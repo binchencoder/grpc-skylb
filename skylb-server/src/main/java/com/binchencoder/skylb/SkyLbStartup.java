@@ -3,6 +3,7 @@ package com.binchencoder.skylb;
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.binchencoder.common.ShutdownHookThread;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,9 @@ public class SkyLbStartup {
       // catch JoranException explicitly because we likely don't care about the stacktrace
       LOGGER.error("JoranException: " + e.getLocalizedMessage());
       System.exit(1);
+    } catch (UnknownHostException ue) {
+      LOGGER.error("UnknownHostException: " + ue.getLocalizedMessage());
+      System.exit(1);
     } catch (IOException e) {
       LOGGER.error("IOException: " + e.getLocalizedMessage());
       System.exit(1);
@@ -51,7 +55,8 @@ public class SkyLbStartup {
     }
   }
 
-  private static SkyLbContext createSkyLbContext(String[] args) throws JoranException {
+  private static SkyLbContext createSkyLbContext(String[] args)
+      throws JoranException, UnknownHostException {
     // Parsing the commander the parameters
     final SkyLbContext skyLbContext = new SkyLbContext(args);
     return skyLbContext;

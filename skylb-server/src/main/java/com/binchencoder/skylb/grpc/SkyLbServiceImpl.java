@@ -301,7 +301,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           Status.DATA_LOSS.withDescription("Failed to get peer client info from context."));
     }
     String clientHostAddr = remoteAddr.getAddress().getHostAddress();
-    LOGGER.info("SkyLb server#reportLoad Start accepting load report from {}.", clientHostAddr);
+    LOGGER.debug("SkyLb server#reportLoad Start accepting load report from {}.", clientHostAddr);
 
     activeReporterGauge.labels(clientHostAddr).inc();
 
@@ -350,7 +350,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             return;
           }
 
-          LOGGER.info("Received load report from {}:{}.", fixHostAddr, req.getPort());
+          LOGGER.debug("Received load report from {}:{}.", fixHostAddr, req.getPort());
           try {
             endpointsHub
                 .upsertEndpoint(req.getSpec(), fixHostAddr, req.getPort(), req.getWeight());

@@ -42,6 +42,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,7 +76,7 @@ public class SkyLbContext {
 
   private Server server;
 
-  public SkyLbContext(String[] args) throws JoranException {
+  public SkyLbContext(String[] args) throws JoranException, UnknownHostException {
     // Parsing the commander the parameters
     this.parseCommandArgs(args);
 
@@ -321,7 +322,7 @@ public class SkyLbContext {
 
         LOGGER.debug("Shutdown complete: " + shutdownComplete.get());
         if (!shutdownComplete.get()) {
-          LOGGER.error("Shutdown stalled - forcefully killing maxwell process");
+          LOGGER.error("Shutdown stalled - forcefully killing skylb process");
           if (self.error != null) {
             LOGGER.error("Termination reason:", self.error);
           }

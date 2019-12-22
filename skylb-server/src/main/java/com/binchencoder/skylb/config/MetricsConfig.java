@@ -5,6 +5,7 @@ import com.beust.jcommander.Parameters;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -34,7 +35,7 @@ public class MetricsConfig extends AbstractConfig {
 
   @Parameter(names = {"--http-bind-address", "-http-bind-address"},
       description = "the ip address the server will bind to when http reporting is configured")
-  private InetAddress httpBindAddress;
+  private InetAddress httpBindAddress = InetAddress.getLocalHost();
 
   @Parameter(names = {"--metrics-jvm", "-metrics-jvm"},
       description = "enable jvm metrics: true|false.")
@@ -45,7 +46,7 @@ public class MetricsConfig extends AbstractConfig {
   public MetricRegistry metricRegistry;
   public HealthCheckRegistry healthCheckRegistry;
 
-  public MetricsConfig() {
+  public MetricsConfig() throws UnknownHostException {
     this.metricRegistry = new MetricRegistry();
     this.healthCheckRegistry = new HealthCheckRegistry();
   }
