@@ -5,8 +5,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 
 /**
- * {@link ShutdownHookThread} is the standard hook for filtersrv and namesrv modules. Through {@link
- * Callable} interface, this hook can customization operations in anywhere.
+ * {@link ShutdownHookThread} is the standard hook for skylbsrv.
+ *
+ * Through {@link Callable} interface, this hook can customization operations in anywhere.
  */
 public class ShutdownHookThread extends Thread {
 

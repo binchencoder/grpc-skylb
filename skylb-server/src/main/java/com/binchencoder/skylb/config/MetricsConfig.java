@@ -17,7 +17,7 @@ public class MetricsConfig extends AbstractConfig {
   private String metricsPrefix;
 
   @Parameter(names = {"--metrics-type", "-metrics-type"},
-      description = "how skylb metrics will be reported, at least one of slf4j|jmx|http")
+      description = "how skylb metrics will be reported, at least one of slf4j | jmx | http")
   private String metricsType;
 
   @Parameter(names = {"--metrics-slf4j-interval", "-metrics-slf4j-interval"},

@@ -5,7 +5,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import java.nio.file.Path;
 
-@Parameters(separators = "=", commandDescription = "Print logger options")
+@Parameters(separators = "=", commandDescription = "Help for skylb logger:")
 public class LoggerConfig extends AbstractConfig {
 
   public static final String DEFAULT_LOGBACK_FILE = "config/logback.xml";

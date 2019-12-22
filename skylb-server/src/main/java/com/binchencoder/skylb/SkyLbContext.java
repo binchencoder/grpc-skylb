@@ -109,22 +109,6 @@ public class SkyLbContext {
     InitPrefix.newInstance(etcdClient);
   }
 
-  public EtcdClient getEtcdClient() {
-    return etcdClient;
-  }
-
-  public ServerConfig getServerConfig() {
-    return serverConfig;
-  }
-
-  public MetricsConfig getMetricsConfig() {
-    return metricsConfig;
-  }
-
-  public SkyLbMetrics getMetrics() {
-    return metrics;
-  }
-
   public void addTask(StoppableTask task) {
     this.taskManager.add(task);
   }
@@ -139,7 +123,7 @@ public class SkyLbContext {
     }
 
     if (taskManager.requestStop()) {
-      if (this.error == null) {
+      if (this.error != null) {
         error.printStackTrace();
       }
       this.terminationThread = spawnTerminateThread();
@@ -147,7 +131,7 @@ public class SkyLbContext {
     return this.terminationThread;
   }
 
-  public AbstractProducer getProducer() throws IOException {
+  public AbstractProducer getProducer() {
     if (this.producer != null) {
       return this.producer;
     }
@@ -169,6 +153,22 @@ public class SkyLbContext {
     return this.producer;
   }
 
+  public EtcdClient getEtcdClient() {
+    return etcdClient;
+  }
+
+  public ServerConfig getServerConfig() {
+    return serverConfig;
+  }
+
+  public MetricsConfig getMetricsConfig() {
+    return metricsConfig;
+  }
+
+  public SkyLbMetrics getMetrics() {
+    return metrics;
+  }
+
   private void parseCommandArgs(String[] args) throws JoranException {
     JCommander commander = JCommander.newBuilder()
         .addConverterInstanceFactory(new DurationConverterInstanceFactory())
@@ -187,6 +187,7 @@ public class SkyLbContext {
         .addObject(SkyLbGraphImpl.config)
         .addObject(metricsConfig)
         .addCommand(EtcdClient.etcdConfig)
+        .addCommand(metricsConfig)
         .addCommand("logger", loggerConfig, "log", "logging")
         .build();
     commander.setCaseSensitiveOptions(false);
