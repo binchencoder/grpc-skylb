@@ -16,9 +16,13 @@ public class GoChannelQueue<E> {
   private AtomicBoolean closed; // 不能写入也不能消费了
   private AtomicBoolean stoped; // 停止写入队列, 还能继续消费
 
-  /** Lock held by take */
+  /**
+   * Lock held by take
+   */
   private final ReentrantLock takeLock = new ReentrantLock();
-  /** Wait queue for waiting takes */
+  /**
+   * Wait queue for waiting takes
+   */
   private final Condition notEmpty = takeLock.newCondition();
 
   public GoChannelQueue() {
@@ -71,8 +75,8 @@ public class GoChannelQueue<E> {
         this.closed.set(true);
         this.signalNotEmpty();
       } else {
-        timer = new Timer();
-        timer.schedule(new TimerTask() {
+        this.timer = new Timer();
+        this.timer.schedule(new TimerTask() {
           @Override
           public void run() {
             closed.set(true);
