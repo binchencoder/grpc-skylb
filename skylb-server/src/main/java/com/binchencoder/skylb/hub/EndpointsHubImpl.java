@@ -200,7 +200,31 @@ public class EndpointsHubImpl implements EndpointsHub {
 
   @Override
   public void removeObserver(List<ServiceSpec> specs, String clientAddr) {
+    Preconditions.checkArgument(null != specs && specs.size() > 0);
+    for (ServiceSpec spec : specs) {
+      String lable = this.formatServiceSpec(spec.getNamespace(), spec.getServiceName());
+      removeObserverGauge.labels(lable).inc();
 
+      String key = KeyUtil.calculateEndpointKey(spec.getNamespace(), spec.getServiceName());
+      ServiceObject so;
+      try {
+        this.fairRWLock.readLock().lock();
+        so = this.services.get(key);
+      } finally {
+        this.fairRWLock.readLock().unlock();
+      }
+
+      if (null == so) {
+        return;
+      }
+
+      try {
+        so.getReadWriteLock().writeLock().lock();
+        so.setObservers(this.removeObserverFromSlice(so.getObservers(), spec, clientAddr));
+      } finally {
+        so.getReadWriteLock().writeLock().unlock();
+      }
+    }
   }
 
   @Override
@@ -604,6 +628,23 @@ public class EndpointsHubImpl implements EndpointsHub {
         }
       });
     }
+  }
+
+  private List<ClientObject> removeObserverFromSlice(List<ClientObject> obs, ServiceSpec spec,
+      String clientAddr) {
+    List<ClientObject> remaining = Lists.newArrayListWithExpectedSize(obs.size());
+
+    for (ClientObject ob : obs) {
+      if (ob.getClientAddr().equals(clientAddr) && ob.getServiceSpec().toByteString()
+          .equals(spec.toByteString())) {
+        // Stop all goroutines for this observer.
+        ob.getNotifyChannel().close(0);
+      } else {
+        remaining.add(ob);
+      }
+    }
+
+    return remaining;
   }
 
   private String formatServiceSpec(String namespace, String serviceName) {
