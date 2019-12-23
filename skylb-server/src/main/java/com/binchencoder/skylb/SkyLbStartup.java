@@ -24,10 +24,10 @@ public class SkyLbStartup {
       }));
       skyLbContext.start();
 
-      String tip =
-          "The SkyLB Server boot successed. gRPC port=" + skyLbContext.getServerConfig().getPort();
-      LOGGER.info(tip);
-      System.out.println(tip);
+//      String tip =
+//          "The SkyLB Server boot successed. gRPC port=" + skyLbContext.getServerConfig().getPort();
+//      LOGGER.info(tip);
+//      System.out.println(tip);
     } catch (JoranException e) {
       // catch JoranException explicitly because we likely don't care about the stacktrace
       LOGGER.error("JoranException: " + e.getLocalizedMessage());
