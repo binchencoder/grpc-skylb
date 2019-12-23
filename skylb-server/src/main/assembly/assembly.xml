@@ -10,7 +10,6 @@
     <fileSets>
         <fileSet>
             <directory>${project.basedir}</directory>
-            <fileMode>0755</fileMode>
             <includes>
                 <include>bin/*</include>
                 <include>logback.xml.example</include>
