@@ -3,6 +3,7 @@ package com.binchencoder.skylb;
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.binchencoder.common.ShutdownHookThread;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
@@ -17,17 +18,15 @@ public class SkyLbStartup {
   public static void main(String[] args) {
     try {
       skyLbContext = createSkyLbContext(args);
-      String tip =
-          "The SkyLB Server boot successed. gRPC port=" + skyLbContext.getServerConfig().getPort();
-      LOGGER.info(tip);
-//      System.out.printf("%s%n", tip);
-
       Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(LOGGER, (Callable<Void>) () -> {
         terminate();
         return null;
       }));
-
       skyLbContext.start();
+
+      String tip =
+          "The SkyLB Server boot successed. gRPC port=" + skyLbContext.getServerConfig().getPort();
+      LOGGER.info(tip);
     } catch (JoranException e) {
       // catch JoranException explicitly because we likely don't care about the stacktrace
       LOGGER.error("JoranException: " + e.getLocalizedMessage());
@@ -37,6 +36,12 @@ public class SkyLbStartup {
       System.exit(1);
     } catch (IOException e) {
       LOGGER.error("IOException: " + e.getLocalizedMessage());
+      System.exit(1);
+    } catch (URISyntaxException e) {
+      // catch URISyntaxException explicitly as well to provide more information to the user
+      LOGGER.error(
+          "Syntax issue with URI, check for configured --etcd-endpoints options (see RFC 2396)");
+      LOGGER.error("URISyntaxException: " + e.getLocalizedMessage());
       System.exit(1);
     } catch (Exception e) {
       e.printStackTrace();
@@ -56,7 +61,7 @@ public class SkyLbStartup {
   }
 
   private static SkyLbContext createSkyLbContext(String[] args)
-      throws JoranException, UnknownHostException {
+      throws JoranException, UnknownHostException, URISyntaxException {
     // Parsing the commander the parameters
     final SkyLbContext skyLbContext = new SkyLbContext(args);
     return skyLbContext;

@@ -257,7 +257,7 @@
                 <artifactId>maven-source-plugin</artifactId>
                 <version>2.2.1</version>
                 <configuration>
-                    <outputDirectory>${basedir}/../target</outputDirectory>
+                    <outputDirectory>${basedir}/target</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -270,6 +270,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

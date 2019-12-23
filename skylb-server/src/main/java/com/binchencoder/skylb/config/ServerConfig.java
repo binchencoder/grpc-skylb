@@ -11,10 +11,6 @@ public class ServerConfig extends AbstractConfig {
       description = "The gRPC server port, e.g., 1900")
   private int port = 1900;
 
-  @Parameter(names = {"--scrape-addr", "-scrape-addr"},
-      description = "The address to listen on for HTTP requests., e.g., :1920")
-  private String scrapeAddr = ":1920";
-
   @Parameter(names = {"--within-k8s", "-within-k8s"},
       description = "Whether SkyLB is running in kubernetes")
   private boolean withInK8s = false;
@@ -31,14 +27,6 @@ public class ServerConfig extends AbstractConfig {
     this.port = port;
   }
 
-  public String getScrapeAddr() {
-    return scrapeAddr;
-  }
-
-  public void setScrapeAddr(String scrapeAddr) {
-    this.scrapeAddr = scrapeAddr;
-  }
-
   public boolean isWithInK8s() {
     return withInK8s;
   }
@@ -51,7 +39,6 @@ public class ServerConfig extends AbstractConfig {
   public String toKeyValues() {
     return new StringBuilder()
         .append("--port").append("=").append(this.getPort()).append("\n")
-        .append("--scrape-addr").append("=").append(this.getScrapeAddr()).append("\n")
         .append("--within-k8s").append("=").append(this.isWithInK8s()).append("\n")
         .append("--auto-rectify-interval").append("=").append(this.autoRectifyInterval.toString())
         .toString();

@@ -49,8 +49,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SkyLbServiceImpl.class);
 
-  public static Config config = new Config();
-
   private static final Gauge activeObserverGauge = Gauge.build()
       .namespace(NAMESPACE)
       .subsystem(SUBSYSTEM)
@@ -136,6 +134,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
   private final LameDuck lameDuck;
   private final SkyLbGraph skyLbGraph;
 
+  public static final Config config = new Config();
   public SkyLbServiceImpl(final EndpointsHub endpointsHub, final LameDuck lameDuck,
       final SkyLbGraph skyLbGraph) {
     this.endpointsHub = endpointsHub;

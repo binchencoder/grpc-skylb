@@ -2,7 +2,9 @@ package com.binchencoder.skylb.etcd;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.internal.Lists;
 import com.beust.jcommander.internal.Maps;
+import com.binchencoder.common.jcommander.ListURIConvert;
 import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointPort;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset;
@@ -10,7 +12,6 @@ import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset.EndpointAddress;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import io.etcd.jetcd.ByteSequence;
@@ -26,6 +27,8 @@ import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
@@ -42,7 +45,19 @@ public class EtcdClient {
   private final Watch watchClient;
   private final Lease leaseClient;
 
-  public static EtcdConfig etcdConfig = new EtcdConfig();
+  public static EtcdConfig etcdConfig;
+
+  static {
+    try {
+      etcdConfig = new EtcdConfig();
+    } catch (URISyntaxException e) {
+      // catch URISyntaxException explicitly as well to provide more information to the user
+      LOGGER.error(
+          "Syntax issue with URI, check for configured --etcd-endpoints options (see RFC 2396)");
+      LOGGER.error("URISyntaxException: " + e.getLocalizedMessage());
+      System.exit(1);
+    }
+  }
 
   public EtcdClient() {
 //    Preconditions.checkArgument(!Objects.isNull(etcdConfig), "EtcdConfig should be not null!");
@@ -144,29 +159,32 @@ public class EtcdClient {
   }
 
   private Client initClient() {
-    ClientBuilder clientBuilder = Client.builder();
-    for (String endpoint : etcdConfig.getEndpoints()) {
-      clientBuilder.endpoints(endpoint);
-    }
+    ClientBuilder clientBuilder = Client.builder().endpoints(etcdConfig.getEndpoints());
     return clientBuilder.build();
   }
 
-  @Parameters(separators = "=", commandNames = {"etcd"}, commandDescription = "Print etcd options")
+  @Parameters(separators = "=",
+      commandNames = {"etcd"}, commandDescription = "Help for etcd options")
   public static class EtcdConfig extends AbstractConfig {
 
     @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},
-        description = "The comma separated ETCD endpoints. e.g., http://etcd1:2379,http://etcd2:2379")
-    public List<String> endpoints = Lists.newArrayList("http://127.0.0.1:2379");
+        description = "The comma separated ETCD endpoints. e.g., http://etcd1:2379,http://etcd2:2379",
+        listConverter = ListURIConvert.class)
+    public List<URI> endpoints;
 
     @Parameter(names = {"--etcd-key-ttl", "-etcd-key-ttl"},
         description = "The etcd key time-to-live. e.g. 10s(10 Seconds), 10m(10 Minutes)")
     public Duration etcdKeyTtl = Duration.ofSeconds(10);
 
-    public List<String> getEndpoints() {
+    public EtcdConfig() throws URISyntaxException {
+      endpoints = Lists.newArrayList(new URI("http://127.0.0.1:2379"));
+    }
+
+    public List<URI> getEndpoints() {
       return endpoints;
     }
 
-    public void setEndpoints(List<String> endpoints) {
+    public void setEndpoints(List<URI> endpoints) {
       this.endpoints = endpoints;
     }
 

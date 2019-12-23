@@ -50,6 +50,7 @@ import io.grpc.StatusRuntimeException;
 import io.prometheus.client.Gauge;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -57,7 +58,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -76,7 +76,7 @@ public class EndpointsHubImpl implements EndpointsHub {
   private final ReentrantReadWriteLock fairRWLock = new ReentrantReadWriteLock(true);
 
   // ConcurrentHashMap ??
-  private Map<String, ServiceObject> services = new ConcurrentHashMap<>();
+  private Map<String, ServiceObject> services = new HashMap<>();
 
   private static final Gauge addObserverGauge = Gauge.build()
       .namespace(NAMESPACE)
@@ -652,7 +652,7 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   @Parameters(separators = "=")
-  public static class Config extends AbstractConfig {
+  public class Config extends AbstractConfig {
 
     @Override
     public String toKeyValues() {

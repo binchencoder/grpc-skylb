@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>skylb-server</artifactId>
     <packaging>jar</packaging>
@@ -48,7 +48,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Maven properties -->
-		    <maven.test.skip>true</maven.test.skip>
+            <maven.test.skip>true</maven.test.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <!-- Compiler settings properties -->
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -91,7 +91,7 @@
             <version>${jetty.version}</version>
         </dependency>
 
-		    <!-- Zipkin -->
+            <!-- Zipkin -->
         <dependency>
             <groupId>io.zipkin.zipkin2</groupId>
             <artifactId>zipkin</artifactId>
@@ -106,19 +106,19 @@
         </dependency>
 
         <!-- JCommander: Command line parsing framework for Java -->
-		    <!-- Docs: http://jcommander.org/ -->
+            <!-- Docs: http://jcommander.org/ -->
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>${jcommander.version}</version>
         </dependency>
 
-<!--		<dependency>-->
-<!--			<groupId>io.kubernetes</groupId>-->
-<!--			<artifactId>client-java</artifactId>-->
-<!--			<version>5.0.0</version>-->
-<!--			<scope>compile</scope>-->
-<!--		</dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.kubernetes</groupId>-->
+<!--            <artifactId>client-java</artifactId>-->
+<!--            <version>5.0.0</version>-->
+<!--            <scope>compile</scope>-->
+<!--        </dependency>-->
 
         <!-- gRPC + ProtoBuffer -->
         <dependency>
@@ -208,9 +208,8 @@
 <!--            <artifactId>spring-boot-test</artifactId>-->
 <!--            <scope>test</scope>-->
 <!--        </dependency>-->
-	  </dependencies>
+    </dependencies>
     <build>
-		    <finalName>skylb</finalName>
         <extensions>
             <extension>
                 <groupId>kr.motd.maven</groupId>
@@ -221,12 +220,12 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
+				<artifactId>maven-source-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-			      </plugin>
+			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -235,18 +234,42 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-                    <outputDirectory>${basedir}/target</outputDirectory>
+                    <outputDirectory>${basedir}/target/lib</outputDirectory>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                             <mainClass>com.binchencoder.skylb.SkyLbStartup</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <tarLongFileMode>posix</tarLongFileMode>
+                    <descriptors>
+                        <descriptor>src/main/assembly/assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<outputDirectory>${basedir}/target/lib</outputDirectory>
+				</configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

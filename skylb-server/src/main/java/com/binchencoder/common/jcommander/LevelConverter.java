@@ -32,7 +32,7 @@ public class LevelConverter extends BaseConverter<Level> {
     public IStringConverter<?> getConverterInstance(Parameter parameter, Class<?> forType,
         String optionName) {
       if (forType == Level.class) {
-        return new LevelConverter("level");
+        return new LevelConverter(optionName);
       }
       return null;
     }

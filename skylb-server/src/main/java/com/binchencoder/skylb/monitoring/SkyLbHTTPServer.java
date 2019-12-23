@@ -117,7 +117,9 @@ class SkyLblHTTPServerWorker implements StoppableTask, Runnable {
 
   @Override
   public void requestStop() throws Exception {
-    this.server.stop();
+    if (null != this.server) {
+      this.server.stop();
+    }
   }
 
   @Override

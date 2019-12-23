@@ -19,7 +19,7 @@ public class LoggerConfig extends AbstractConfig {
   private boolean logToStdout = false;
 
   @Parameter(names = {"--logback-path", "-logback-path"},
-      description = "Reload the logback XML path.")
+      description = "Location of logback xml file.")
   private Path logbackPath;
 
   public Level getLoggerLevel() {

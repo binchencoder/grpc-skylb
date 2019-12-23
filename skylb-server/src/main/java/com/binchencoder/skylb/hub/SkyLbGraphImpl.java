@@ -28,8 +28,6 @@ public class SkyLbGraphImpl implements SkyLbGraph {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SkyLbGraphImpl.class);
 
-  public static Config config = new Config();
-
   private Timer timer;
 
   private Map<String, String> graphKey = new ConcurrentHashMap();
@@ -38,6 +36,7 @@ public class SkyLbGraphImpl implements SkyLbGraph {
   private final EtcdClient etcdClient;
   private final ExecutorService serviceGraphExecutor;
 
+  public static final Config config = new Config();
   // Constructor
   public SkyLbGraphImpl(EtcdClient etcdClient) {
     this.etcdClient = etcdClient;

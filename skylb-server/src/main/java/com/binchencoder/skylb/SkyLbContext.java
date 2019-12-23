@@ -42,6 +42,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Optional;
@@ -76,7 +77,8 @@ public class SkyLbContext {
 
   private Server server;
 
-  public SkyLbContext(String[] args) throws JoranException, UnknownHostException {
+  public SkyLbContext(String[] args)
+      throws JoranException, UnknownHostException, URISyntaxException {
     // Parsing the commander the parameters
     this.parseCommandArgs(args);
 
@@ -170,7 +172,7 @@ public class SkyLbContext {
     return metrics;
   }
 
-  private void parseCommandArgs(String[] args) throws JoranException {
+  private void parseCommandArgs(String[] args) throws JoranException, URISyntaxException {
     JCommander commander = JCommander.newBuilder()
         .addConverterInstanceFactory(new DurationConverterInstanceFactory())
         .addConverterInstanceFactory(new LevelConverterInstanceFactory())
