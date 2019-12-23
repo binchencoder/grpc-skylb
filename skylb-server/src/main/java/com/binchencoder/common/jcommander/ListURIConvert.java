@@ -1,10 +1,9 @@
 package com.binchencoder.common.jcommander;
 
-import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.BaseConverter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
+import com.beust.jcommander.converters.URIConverter;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,11 +20,7 @@ public class ListURIConvert extends BaseConverter<List<URI>> {
     List<String> strUris = splitter.split(value);
     List<URI> uris = new ArrayList<>(strUris.size());
     for (String uri : strUris) {
-      try {
-        uris.add(new URI(uri));
-      } catch (URISyntaxException e) {
-        throw new ParameterException(getErrorString(uri, "an List<URI>"));
-      }
+      uris.add(new URIConverter(this.getOptionName()).convert(uri));
     }
     return uris;
   }

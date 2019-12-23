@@ -27,24 +27,29 @@ public class SkyLbStartup {
       String tip =
           "The SkyLB Server boot successed. gRPC port=" + skyLbContext.getServerConfig().getPort();
       LOGGER.info(tip);
+      System.out.println(tip);
     } catch (JoranException e) {
       // catch JoranException explicitly because we likely don't care about the stacktrace
       LOGGER.error("JoranException: " + e.getLocalizedMessage());
+      e.printStackTrace(System.err);
       System.exit(1);
     } catch (UnknownHostException ue) {
       LOGGER.error("UnknownHostException: " + ue.getLocalizedMessage());
+      ue.printStackTrace(System.err);
       System.exit(1);
     } catch (IOException e) {
       LOGGER.error("IOException: " + e.getLocalizedMessage());
+      e.printStackTrace(System.err);
       System.exit(1);
     } catch (URISyntaxException e) {
       // catch URISyntaxException explicitly as well to provide more information to the user
       LOGGER.error(
           "Syntax issue with URI, check for configured --etcd-endpoints options (see RFC 2396)");
       LOGGER.error("URISyntaxException: " + e.getLocalizedMessage());
+      e.printStackTrace(System.err);
       System.exit(1);
     } catch (Exception e) {
-      e.printStackTrace();
+      e.printStackTrace(System.err);
       System.exit(1);
     }
   }

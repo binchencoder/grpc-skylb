@@ -12,7 +12,7 @@ public class LoggerConfig extends AbstractConfig {
 
   @Parameter(names = {"--log-level", "-log-level"},
       description = "The application logging level, e.g., ERROR, WARN, INFO, DEBUG, TRACE")
-  private Level loggerLevel = Level.DEBUG;
+  private Level loggerLevel = Level.INFO;
 
   @Parameter(names = {"--log-to-stdout", "-log-to-stdout"},
       description = "Whether to print the log to the console.")

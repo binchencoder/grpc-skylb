@@ -4,6 +4,8 @@ import static com.binchencoder.skylb.monitoring.SkyLbMetrics.reportingTypeHttp;
 
 import com.binchencoder.skylb.SkyLbContext;
 import com.binchencoder.skylb.config.MetricsConfig;
+import com.binchencoder.skylb.etcd.EtcdClient;
+import com.binchencoder.skylb.svclist.SvcListServlet;
 import com.binchencoder.util.StoppableTask;
 import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
@@ -36,7 +38,7 @@ public class SkyLbHTTPServer {
     InetAddress httpBindAddress = metricsConfig.getHttpBindAddress();
     String pathPrefix = metricsConfig.getHttpPathPrefix();
     SkyLblHTTPServerWorker skyLblHTTPServerWorker = new SkyLblHTTPServerWorker(httpBindAddress,
-        port, pathPrefix, metricsRegistries);
+        port, pathPrefix, metricsRegistries, skyLbContext.getEtcdClient());
     Thread thread = new Thread(skyLblHTTPServerWorker);
 
     skyLbContext.addTask(skyLblHTTPServerWorker);
@@ -72,14 +74,17 @@ class SkyLblHTTPServerWorker implements StoppableTask, Runnable {
   private int port;
   private final String pathPrefix;
   private final SkyLbMetrics.Registries metricsRegistries;
+  private final EtcdClient etcdClient;
+
   private Server server;
 
   public SkyLblHTTPServerWorker(InetAddress bindAddress, int port, String pathPrefix,
-      SkyLbMetrics.Registries metricsRegistries) {
+      SkyLbMetrics.Registries metricsRegistries, EtcdClient etcdClient) {
     this.bindAddress = bindAddress;
     this.port = port;
     this.pathPrefix = pathPrefix;
     this.metricsRegistries = metricsRegistries;
+    this.etcdClient = etcdClient;
   }
 
   public void startServer() throws Exception {
@@ -100,6 +105,8 @@ class SkyLblHTTPServerWorker implements StoppableTask, Runnable {
           new ServletHolder(new HealthCheckServlet(metricsRegistries.healthCheckRegistry)),
           "/healthcheck");
       handler.addServlet(new ServletHolder(new PingServlet()), "/ping");
+
+      handler.addServlet(new ServletHolder(new SvcListServlet(etcdClient)), "/svclist");
     }
 
     this.server.start();

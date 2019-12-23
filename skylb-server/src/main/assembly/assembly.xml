@@ -4,23 +4,23 @@
     <id>skylb</id>
     <formats>
         <format>tar.gz</format>
-		<format>dir</format>
+		    <format>dir</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
     <fileSets>
         <fileSet>
             <directory>${project.basedir}</directory>
-			<fileMode>0755</fileMode>
+            <fileMode>0755</fileMode>
             <includes>
                 <include>bin/*</include>
-				<include>logback.xml.example</include>
+                <include>logback.xml.example</include>
                 <include>README*</include>
                 <include>LICENSE*</include>
                 <include>NOTICE*</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}</directory>
+            <directory>${project.build.directory}/lib</directory>
             <outputDirectory>lib</outputDirectory>
             <includes>
                 <include>*.jar</include>
