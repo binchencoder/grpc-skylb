@@ -2,6 +2,7 @@ package com.binchencoder.skylb;
 
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.binchencoder.common.ShutdownHookThread;
+import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -47,6 +48,8 @@ public class SkyLbStartup {
           "Syntax issue with URI, check for configured --etcd-endpoints options (see RFC 2396)");
       LOGGER.error("URISyntaxException: " + e.getLocalizedMessage());
       e.printStackTrace(System.err);
+    } catch (StatusRuntimeException sre) {
+      sre.printStackTrace(System.err);
       System.exit(1);
     } catch (Exception e) {
       e.printStackTrace(System.err);
@@ -66,7 +69,7 @@ public class SkyLbStartup {
   }
 
   private static SkyLbContext createSkyLbContext(String[] args)
-      throws JoranException, UnknownHostException, URISyntaxException {
+      throws JoranException, UnknownHostException, URISyntaxException, StatusRuntimeException {
     // Parsing the commander the parameters
     final SkyLbContext skyLbContext = new SkyLbContext(args);
     return skyLbContext;

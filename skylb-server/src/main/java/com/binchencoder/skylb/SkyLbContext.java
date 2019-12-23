@@ -37,6 +37,7 @@ import io.grpc.ServerBuilder;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerInterceptors;
 import io.grpc.ServerServiceDefinition;
+import io.grpc.StatusRuntimeException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -78,7 +79,7 @@ public class SkyLbContext {
   private Server server;
 
   public SkyLbContext(String[] args)
-      throws JoranException, UnknownHostException, URISyntaxException {
+      throws JoranException, UnknownHostException, URISyntaxException, StatusRuntimeException {
     // Parsing the commander the parameters
     this.parseCommandArgs(args);
 

@@ -100,7 +100,8 @@ public class EndpointsHubImpl implements EndpointsHub {
   private final ExecutorService endpointExecutor;
 
   // Constructor
-  public EndpointsHubImpl(EtcdClient etcdClient, LameDuck lameDuck, ServerConfig serverConfig) {
+  public EndpointsHubImpl(EtcdClient etcdClient, LameDuck lameDuck, ServerConfig serverConfig)
+      throws StatusRuntimeException {
     this.etcdClient = etcdClient;
     this.lameDuck = lameDuck;
     this.serverConfig = serverConfig;
@@ -291,15 +292,15 @@ public class EndpointsHubImpl implements EndpointsHub {
     LOGGER.info("Shutting down endpointExecutor ...");
   }
 
-  private void startK8sWatcher() {
+  private void startK8sWatcher() throws StatusRuntimeException {
     // TODO(chenbin) implement it with in k8s
   }
 
-  private void startMainWatcher() {
+  private void startMainWatcher() throws StatusRuntimeException {
     new Thread(this::runMainWatcher).start();
   }
 
-  private void runMainWatcher() {
+  private void runMainWatcher() throws StatusRuntimeException {
     final ByteSequence bytesKey = ByteSequence.from(ENDPOINTS_KEY.getBytes());
     // Watch etcd keys for all service endpoints and notify clients.
     Listener listener = new Listener() {
@@ -342,11 +343,11 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   // Starts a watcher to watch changes of lame duck.
-  private void startLameDuckWatcher() {
+  private void startLameDuckWatcher() throws StatusRuntimeException {
     new Thread(this::runLameDuckWatcher).start();
   }
 
-  private void runLameDuckWatcher() {
+  private void runLameDuckWatcher() throws StatusRuntimeException {
     final ByteSequence bytesKey = ByteSequence.from(LAMEDUCK_KEY.getBytes());
 
     GetResponse resp;
@@ -360,7 +361,9 @@ public class EndpointsHubImpl implements EndpointsHub {
         StatusRuntimeException sre = (StatusRuntimeException) throwable.getCause().getCause();
         if (sre.getStatus().getCode() == Code.UNAVAILABLE) {
           LOGGER.error("Failed to connect etcd, will system out.", throwable);
-          System.exit(-3);
+
+          throw sre;
+//          System.exit(-3);
         }
       }
 
