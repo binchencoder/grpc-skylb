@@ -195,7 +195,7 @@ public class SkyLbContext {
         .addCommand("logger", loggerConfig, "log", "logging")
         .build();
     commander.setCaseSensitiveOptions(false);
-    commander.setProgramName("java -jar skylb.jar");
+    commander.setProgramName("java -jar skylb[-{version}].jar");
     try {
       commander.parse(args);
     } catch (ParameterException e) {

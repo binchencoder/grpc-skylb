@@ -13,8 +13,8 @@ SERVER_NAME='skylb'
 START_JAR=`ls -F $lib_dir | grep -i $SERVER_NAME | grep .jar$`
 
 # Generic jvm settings you want to add
-if [ -z "$SKYLB_OPTS" ]; then
-  SKYLB_OPTS=""
+if [ -z "$JAVA_OPTS" ]; then
+  JAVA_OPTS=""
 fi
 
 # Set Debug options if enabled
@@ -34,7 +34,7 @@ if [ "x$SKYLB_DEBUG" != "x" ]; then
     fi
 
     echo "Enabling Java debug options: $JAVA_DEBUG_OPTS"
-    SKYLB_OPTS="$JAVA_DEBUG_OPTS $SKYLB_OPTS"
+    JAVA_OPTS="$JAVA_DEBUG_OPTS $JAVA_OPTS"
 fi
 
 # Which java to use
@@ -44,22 +44,12 @@ else
   JAVA="$JAVA_HOME/bin/java"
 fi
 
-# Memory options
-if [ -z "$SKYLB_HEAP_OPTS" ]; then
-  SKYLB_HEAP_OPTS="-Xmx256M"
-fi
-
-# JVM performance options
-if [ -z "$SKYLB_JVM_PERFORMANCE_OPTS" ]; then
-  SKYLB_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -Djava.awt.headless=true"
-fi
-
 while [ $# -gt 0 ];
 do
   COMMAND=$1
   case $COMMAND in
     -loggc)
-      if [ -z "$SKYLB_GC_LOG_OPTS" ]; then
+      if [ -z "$JAVA_GC_LOG_OPTS" ]; then
         GC_LOG_ENABLED="true"
       fi
       shift
@@ -75,15 +65,17 @@ do
   esac
 done
 
+# Log directory to use
+if [ "x$LOG_DIR" = "x" ]; then
+    LOG_DIR="$base_dir/logs"
+fi
+# Create logs directory
+if [ ! -d "$LOG_DIR" ]; then
+    mkdir -p "$LOG_DIR"
+fi
+
+# Daemon mode console output
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
-    # Log directory to use
-    if [ "x$LOG_DIR" = "x" ]; then
-        LOG_DIR="$base_dir/logs"
-    fi
-    # Create logs directory
-    if [ ! -d "$LOG_DIR" ]; then
-        mkdir -p "$LOG_DIR"
-    fi
     # Console output file when maxwell runs as a daemon
     CONSOLE_OUTPUT_FILE=$LOG_DIR/$DAEMON_NAME.out
     echo "Redirecting STDOUT to $CONSOLE_OUTPUT_FILE"
@@ -93,7 +85,11 @@ fi
 GC_FILE_SUFFIX='-gc.log'
 GC_LOG_FILE_NAME=''
 if [ "x$GC_LOG_ENABLED" = "xtrue" ]; then
-  GC_LOG_FILE_NAME=$DAEMON_NAME$GC_FILE_SUFFIX
+  if [ "x$DAEMON_MODE" = "xtrue" ]; then
+    GC_LOG_FILE_NAME=$DAEMON_NAME$GC_FILE_SUFFIX
+  else
+    GC_LOG_FILE_NAME=SkyLB$GC_FILE_SUFFIX
+  fi;
 
   # The first segment of the version number, which is '1' for releases before Java 9
   # it then becomes '9', '10', ...
@@ -104,22 +100,34 @@ if [ "x$GC_LOG_ENABLED" = "xtrue" ]; then
   # 10.0.1 -> java version "10.0.1" 2018-04-17
   # We need to match to the end of the line to prevent sed from printing the characters that do not match
   JAVA_MAJOR_VERSION=$($JAVA -version 2>&1 | sed -E -n 's/.* version "([0-9]*).*$/\1/p')
+  echo $($JAVA -version)
   if [[ "$JAVA_MAJOR_VERSION" -ge "9" ]] ; then
-    SKYLB_GC_LOG_OPTS="-Xlog:gc*:file=$LOG_DIR/$GC_LOG_FILE_NAME:time,tags:filecount=10,filesize=102400"
+    JAVA_GC_LOG_OPTS="-Xlog:gc*:file=$LOG_DIR/$GC_LOG_FILE_NAME:time,tags:filecount=10,filesize=102400"
   else
-    SKYLB_GC_LOG_OPTS="-Xloggc:$LOG_DIR/$GC_LOG_FILE_NAME -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=100M"
+    JAVA_GC_LOG_OPTS="-Xloggc:$LOG_DIR/$GC_LOG_FILE_NAME -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=100M"
   fi
 fi
 
-if [ -z "$JAVA_HOME" ]; then
-	JAVA="java"
-else
-	JAVA="$JAVA_HOME/bin/java"
+# Memory options
+if [ -z "$JAVA_HEAP_OPTS" ]; then
+  JAVA_HEAP_OPTS="-Xmx256M"
+fi
+
+# JVM performance options
+if [ -z "$JAVA_JVM_PERFORMANCE_OPTS" ]; then
+  JAVA_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -Djava.awt.headless=true"
+fi
+
+if [ "x$DAEMON_MODE" = "xtrue" ]; then
+  echo "Java Opts: $JAVA_HEAP_OPTS $JAVA_JVM_PERFORMANCE_OPTS $JAVA_GC_LOG_OPTS $JAVA_OPTS"
 fi
 
 # Launch mode
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
-    nohup $JAVA $SKYLB_HEAP_OPTS $SKYLB_JVM_PERFORMANCE_OPTS $SKYLB_GC_LOG_OPTS $SKYLB_OPTS -jar $lib_dir/$START_JAR "$@" > "$CONSOLE_OUTPUT_FILE" 2>&1 < /dev/null &
+    nohup $JAVA $JAVA_HEAP_OPTS $JAVA_JVM_PERFORMANCE_OPTS $JAVA_GC_LOG_OPTS $JAVA_OPTS \
+      -jar $lib_dir/$START_JAR "$@" \
+      > "$CONSOLE_OUTPUT_FILE" 2>&1 < /dev/null &
 else
-    exec $JAVA $SKYLB_HEAP_OPTS $SKYLB_JVM_PERFORMANCE_OPTS $SKYLB_GC_LOG_OPTS $SKYLB_OPTS -jar $lib_dir/$START_JAR "$@"
+    exec $JAVA $JAVA_HEAP_OPTS $JAVA_JVM_PERFORMANCE_OPTS $JAVA_GC_LOG_OPTS $JAVA_OPTS \
+      -jar $lib_dir/$START_JAR "$@"
 fi

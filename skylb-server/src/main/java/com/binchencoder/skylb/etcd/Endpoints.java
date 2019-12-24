@@ -22,6 +22,8 @@ import java.util.Set;
  *     },
  *  ]
  *  </pre>
+ *
+ * More info: https://github.com/kubernetes/api/blob/master/core/v1/generated.proto
  */
 public class Endpoints {
 
@@ -40,8 +42,35 @@ public class Endpoints {
 
   private Map<String, String> labels;
 
+  // Check out the explanations for the following two fields
+  // https://github.com/kubernetes/apimachinery/blob/master/pkg/apis/meta/v1/generated.proto
+  /**
+   * Name must be unique within a namespace. Is required when creating resources, although
+   * some resources may allow a client to request the generation of an appropriate name
+   * automatically. Name is primarily intended for creation idempotence and configuration
+   * definition.
+   * <br>
+   * Cannot be updated.
+   * <br>
+   * More info: http://kubernetes.io/docs/user-guide/identifiers#names
+   * <br>
+   * +optional
+   */
   private String name;
 
+  /**
+   * Namespace defines the space within each name must be unique. An empty namespace is
+   * equivalent to the "default" namespace, but "default" is the canonical representation.
+   * Not all objects are required to be scoped to a namespace - the value of this field for
+   * those objects will be empty.
+   * <br>
+   * Must be a DNS_LABEL.
+   * Cannot be updated.
+   * <br>
+   * More info: http://kubernetes.io/docs/user-guide/namespaces
+   * <br>
+   *  +optional
+   */
   private String namespace;
 
   public Set<EndpointSubset> getSubsets() {

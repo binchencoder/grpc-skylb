@@ -34,6 +34,7 @@ public class SkyLbHTTPServer {
 
     SkyLbMetrics.Registries metricsRegistries = getMetricsRegistries(skyLbContext);
     LOGGER.info("SkyLB metrics http server starting");
+
     int port = metricsConfig.getHttpPort();
     InetAddress httpBindAddress = metricsConfig.getHttpBindAddress();
     String pathPrefix = metricsConfig.getHttpPathPrefix();
@@ -94,6 +95,7 @@ class SkyLblHTTPServerWorker implements StoppableTask, Runnable {
       this.server = new Server(this.port);
     }
     ServletContextHandler handler = new ServletContextHandler(this.server, pathPrefix);
+    handler.addServlet(new ServletHolder(new SvcListServlet(etcdClient)), "/svclist");
 
     if (metricsRegistries != null) {
       // TODO: there is a way to wire these up automagically via the AdminServlet, but it escapes me right now
@@ -105,8 +107,6 @@ class SkyLblHTTPServerWorker implements StoppableTask, Runnable {
           new ServletHolder(new HealthCheckServlet(metricsRegistries.healthCheckRegistry)),
           "/healthcheck");
       handler.addServlet(new ServletHolder(new PingServlet()), "/ping");
-
-      handler.addServlet(new ServletHolder(new SvcListServlet(etcdClient)), "/svclist");
     }
 
     this.server.start();
