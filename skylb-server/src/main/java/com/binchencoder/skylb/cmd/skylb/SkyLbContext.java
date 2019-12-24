@@ -1,4 +1,4 @@
-package com.binchencoder.skylb;
+package com.binchencoder.skylb.cmd.skylb;
 
 import static com.binchencoder.skylb.config.LoggerConfig.DEFAULT_LOGBACK_FILE;
 

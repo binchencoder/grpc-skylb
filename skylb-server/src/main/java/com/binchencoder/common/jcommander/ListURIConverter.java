@@ -7,11 +7,11 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListURIConvert extends BaseConverter<List<URI>> {
+public class ListURIConverter extends BaseConverter<List<URI>> {
 
   private final CommaParameterSplitter splitter = new CommaParameterSplitter();
 
-  public ListURIConvert(String optionName) {
+  public ListURIConverter(String optionName) {
     super(optionName);
   }
 

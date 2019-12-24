@@ -2,7 +2,7 @@ package com.binchencoder.skylb.monitoring;
 
 import static com.binchencoder.skylb.monitoring.SkyLbMetrics.reportingTypeHttp;
 
-import com.binchencoder.skylb.SkyLbContext;
+import com.binchencoder.skylb.cmd.skylb.SkyLbContext;
 import com.binchencoder.skylb.config.MetricsConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.svclist.SvcListServlet;

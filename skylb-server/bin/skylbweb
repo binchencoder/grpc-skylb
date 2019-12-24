@@ -4,12 +4,12 @@ set -e
 
 base_dir="$(dirname "$0")/.."
 lib_dir="$base_dir/lib"
-lib_dir_development="$base_dir/target/skylblib"
+lib_dir_development="$base_dir/target/skylbweblib"
 if [ ! -e "$lib_dir" -a -e "$lib_dir_development" ]; then
 	lib_dir="$lib_dir_development"
 fi
 
-SERVER_NAME='skylb'
+SERVER_NAME='skylbwebserver'
 START_JAR=`ls -F $lib_dir | grep -i $SERVER_NAME | grep .jar$`
 
 # Which java to use
@@ -35,7 +35,7 @@ do
       ;;
     -daemon)
       DAEMON_MODE="true"
-      DAEMON_NAME="SkyLBDaemon"
+      DAEMON_NAME="SkyLBWebDaemon"
       shift
       ;;
     *)
@@ -92,7 +92,7 @@ if [ "x$GC_LOG_ENABLED" = "xtrue" ]; then
   if [ "x$DAEMON_MODE" = "xtrue" ]; then
     GC_LOG_FILE_NAME=$DAEMON_NAME$GC_FILE_SUFFIX
   else
-    GC_LOG_FILE_NAME=SkyLB$GC_FILE_SUFFIX
+    GC_LOG_FILE_NAME=SkyLBWeb$GC_FILE_SUFFIX
   fi;
 
   # The first segment of the version number, which is '1' for releases before Java 9
@@ -137,6 +137,6 @@ else
 fi
 
 # Echo PID
-PIDS=$(ps ax | grep -i 'skylb' | grep -i 'skylb-server' | grep java | grep -v grep | awk '{print $1}')
+PIDS=$(ps ax | grep -i 'skylbwebserver' | grep java | grep -v grep | awk '{print $1}')
 echo
 echo "Started server PID: $PIDS"

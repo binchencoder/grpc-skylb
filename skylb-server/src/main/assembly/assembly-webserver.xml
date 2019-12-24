@@ -1,7 +1,7 @@
 <assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
-	<id>skylb</id>
+	<id>skylbwebserver</id>
 	<formats>
 		<format>tar.gz</format>
 <!--		<format>dir</format>-->
@@ -11,8 +11,7 @@
 		<fileSet>
 			<directory>${project.basedir}</directory>
 			<includes>
-				<include>bin/skylb</include>
-				<include>bin/stop</include>
+				<include>bin/skylbweb</include>
 				<include>logback.xml.example</include>
 				<include>README*</include>
 				<include>LICENSE*</include>
@@ -20,16 +19,11 @@
 			</includes>
 		</fileSet>
 		<fileSet>
-			<directory>${project.build.directory}/skylblib</directory>
+			<directory>${project.build.directory}/skylbweblib</directory>
 			<outputDirectory>lib</outputDirectory>
 			<includes>
 				<include>*.jar</include>
 			</includes>
 		</fileSet>
 	</fileSets>
-	<files>
-		<file>
-			<source>../docs/load-balancing.md</source>
-		</file>
-	</files>
 </assembly>

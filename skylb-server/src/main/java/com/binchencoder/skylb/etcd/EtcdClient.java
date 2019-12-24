@@ -4,7 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.internal.Lists;
 import com.beust.jcommander.internal.Maps;
-import com.binchencoder.common.jcommander.ListURIConvert;
+import com.binchencoder.common.jcommander.ListURIConverter;
 import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointPort;
 import com.binchencoder.skylb.etcd.Endpoints.EndpointSubset;
@@ -169,7 +169,7 @@ public class EtcdClient {
 
     @Parameter(names = {"--etcd-endpoints", "-etcd-endpoints"},
         description = "The comma separated ETCD endpoints. e.g., http://etcd1:2379,http://etcd2:2379",
-        listConverter = ListURIConvert.class)
+        listConverter = ListURIConverter.class)
     public List<URI> endpoints;
 
     @Parameter(names = {"--etcd-key-ttl", "-etcd-key-ttl"},

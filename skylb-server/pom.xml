@@ -1,242 +1,257 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <artifactId>skylb-server</artifactId>
-    <packaging>jar</packaging>
-    <version>1.0-SNAPSHOT</version>
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>skylb-server</artifactId>
+	<packaging>jar</packaging>
+	<version>1.0-SNAPSHOT</version>
 
-    <name>gRPC SkyLB Server</name>
-    <description>SkyLB Server: an external gRPC load balancer based on SkyDNS. Implemented in the Java language.</description>
-    <url>https://binchencoder.github.io</url>
+	<name>gRPC SkyLB Server</name>
+	<description>SkyLB Server: an external gRPC load balancer based on SkyDNS. Implemented in the Java language.</description>
+	<url>https://binchencoder.github.io</url>
 
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
-    <parent>
-        <groupId>com.binchencoder.skylb</groupId>
-        <artifactId>grpc-skylb</artifactId>
-        <version>1.0-SNAPSHOT</version>
-        <relativePath>..</relativePath>
-    </parent>
+	<parent>
+		<groupId>com.binchencoder.skylb</groupId>
+		<artifactId>grpc-skylb</artifactId>
+		<version>1.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
 
-    <organization>
-        <name>Binchencoder</name>
-        <url>https://www.github.com/binchencoder</url>
-    </organization>
-    <repositories>
-        <repository>
-            <id>mvn-repo</id>
-            <url>https://raw.github.com/binchencoder/mvn-repo/master</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-    </repositories>
+	<organization>
+		<name>Binchencoder</name>
+		<url>https://www.github.com/binchencoder</url>
+	</organization>
+	<repositories>
+		<repository>
+			<id>mvn-repo</id>
+			<url>https://raw.github.com/binchencoder/mvn-repo/master</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
 
-    <properties>
-        <encoding>UTF-8</encoding>
-        <java.version>1.8</java.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	<properties>
+		<encoding>UTF-8</encoding>
+		<java.version>1.8</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <!-- Maven properties -->
-            <maven.test.skip>true</maven.test.skip>
-        <maven.javadoc.skip>true</maven.javadoc.skip>
-        <!-- Compiler settings properties -->
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
+		<!-- Maven properties -->
+			<maven.test.skip>true</maven.test.skip>
+		<maven.javadoc.skip>true</maven.javadoc.skip>
+		<!-- Compiler settings properties -->
+		<maven.compiler.source>${java.version}</maven.compiler.source>
+		<maven.compiler.target>${java.version}</maven.compiler.target>
 
-        <github.global.server>github</github.global.server>
+		<github.global.server>github</github.global.server>
 
-        <jetcd.version>0.3.0</jetcd.version>
-        <jcommander.version>1.78</jcommander.version>
-        <zipkin.version>2.19.2</zipkin.version>
+		<jetcd.version>0.3.0</jetcd.version>
+		<jcommander.version>1.78</jcommander.version>
+		<zipkin.version>2.19.2</zipkin.version>
 
-        <jetty.version>9.4.24.v20191120</jetty.version> <!--Jetty version-->
-        <dropwizard.version>4.1.1</dropwizard.version>
-    </properties>
+		<jetty.version>9.4.24.v20191120</jetty.version> <!--Jetty version-->
+		<dropwizard.version>4.1.1</dropwizard.version>
+	</properties>
 
-    <dependencies>
-        <!-- Self services. -->
-        <!-- data-proto have only one
-         version (the SNAPSHOT version), thus can be enclosed by skylb-client. -->
-        <dependency>
-            <groupId>com.binchencoder.gateway</groupId>
-            <artifactId>data-proto</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.binchencoder.skylb</groupId>
-            <artifactId>skylb-api-proto</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
+	<dependencies>
+		<!-- Self services. -->
+		<!-- data-proto have only one
+		 version (the SNAPSHOT version), thus can be enclosed by skylb-client. -->
+		<dependency>
+			<groupId>com.binchencoder.gateway</groupId>
+			<artifactId>data-proto</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.binchencoder.skylb</groupId>
+			<artifactId>skylb-api-proto</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
 
-        <!-- Jetty -->
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
+		<!-- Jetty -->
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-server</artifactId>
+			<version>${jetty.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-servlet</artifactId>
+			<version>${jetty.version}</version>
+		</dependency>
 
-            <!-- Zipkin -->
-        <dependency>
-            <groupId>io.zipkin.zipkin2</groupId>
-            <artifactId>zipkin</artifactId>
-            <version>${zipkin.version}</version>
-        </dependency>
+			<!-- Zipkin -->
+		<dependency>
+			<groupId>io.zipkin.zipkin2</groupId>
+			<artifactId>zipkin</artifactId>
+			<version>${zipkin.version}</version>
+		</dependency>
 
-        <!-- jetcd: Java Client for etcd V3 -->
-        <dependency>
-            <groupId>io.etcd</groupId>
-            <artifactId>jetcd-core</artifactId>
-            <version>${jetcd.version}</version>
-        </dependency>
+		<!-- jetcd: Java Client for etcd V3 -->
+		<dependency>
+			<groupId>io.etcd</groupId>
+			<artifactId>jetcd-core</artifactId>
+			<version>${jetcd.version}</version>
+		</dependency>
 
-        <!-- JCommander: Command line parsing framework for Java -->
-            <!-- Docs: http://jcommander.org/ -->
-        <dependency>
-            <groupId>com.beust</groupId>
-            <artifactId>jcommander</artifactId>
-            <version>${jcommander.version}</version>
-        </dependency>
+		<!-- JCommander: Command line parsing framework for Java -->
+			<!-- Docs: http://jcommander.org/ -->
+		<dependency>
+			<groupId>com.beust</groupId>
+			<artifactId>jcommander</artifactId>
+			<version>${jcommander.version}</version>
+		</dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>io.kubernetes</groupId>-->
-<!--            <artifactId>client-java</artifactId>-->
-<!--            <version>5.0.0</version>-->
-<!--            <scope>compile</scope>-->
-<!--        </dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>io.kubernetes</groupId>-->
+<!--			<artifactId>client-java</artifactId>-->
+<!--			<version>5.0.0</version>-->
+<!--			<scope>compile</scope>-->
+<!--		</dependency>-->
 
-        <!-- gRPC + ProtoBuffer -->
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-protobuf</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-stub</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.api.grpc</groupId>
-            <artifactId>googleapis-common-protos</artifactId>
-        </dependency>
+		<!-- gRPC + ProtoBuffer -->
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-protobuf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-stub</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>protobuf-java</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.google.api.grpc</groupId>
+			<artifactId>googleapis-common-protos</artifactId>
+		</dependency>
 
-        <!-- Monitoring: prometheus -->
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_servlet</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_dropwizard</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-servlets</artifactId>
-            <version>${dropwizard.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-jmx</artifactId>
-            <version>${dropwizard.version}</version>
-        </dependency>
+		<!-- Monitoring: prometheus -->
+		<dependency>
+			<groupId>io.prometheus</groupId>
+			<artifactId>simpleclient</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.prometheus</groupId>
+			<artifactId>simpleclient_servlet</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.prometheus</groupId>
+			<artifactId>simpleclient_dropwizard</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.dropwizard.metrics</groupId>
+			<artifactId>metrics-servlets</artifactId>
+			<version>${dropwizard.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.dropwizard.metrics</groupId>
+			<artifactId>metrics-jmx</artifactId>
+			<version>${dropwizard.version}</version>
+		</dependency>
 
-        <!-- Apache Commons -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <scope>compile</scope>
-        </dependency>
+		<!-- Apache Commons -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<scope>compile</scope>
+		</dependency>
 
-        <!-- Logging. -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-        </dependency>
+		<!-- Logging. -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+		</dependency>
 
-        <!-- Apache Commons -->
-        <dependency>
-            <groupId>commons-cli</groupId>
-            <artifactId>commons-cli</artifactId>
-            <version>1.2</version>
-        </dependency>
+		<!-- Apache Commons -->
+		<dependency>
+			<groupId>commons-cli</groupId>
+			<artifactId>commons-cli</artifactId>
+			<version>1.2</version>
+		</dependency>
 
-        <!-- Testing. -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>compile</scope>
-        </dependency>
-<!--        <dependency>-->
-<!--          <groupId>org.springframework.boot</groupId>-->
-<!--          <artifactId>spring-boot-starter-test</artifactId>-->
-<!--          <scope>test</scope>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-test</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
-    </dependencies>
-    <build>
-        <extensions>
-            <extension>
-                <groupId>kr.motd.maven</groupId>
-                <artifactId>os-maven-plugin</artifactId>
-                <version>1.4.1.Final</version>
-            </extension>
-        </extensions>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
+		<!-- Testing. -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>compile</scope>
+		</dependency>
+<!--		<dependency>-->
+<!--		  <groupId>org.springframework.boot</groupId>-->
+<!--		  <artifactId>spring-boot-starter-test</artifactId>-->
+<!--		  <scope>test</scope>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-test</artifactId>-->
+<!--			<scope>test</scope>-->
+<!--		</dependency>-->
+	</dependencies>
+	<build>
+		<extensions>
+			<extension>
+				<groupId>kr.motd.maven</groupId>
+				<artifactId>os-maven-plugin</artifactId>
+				<version>1.4.1.Final</version>
+			</extension>
+		</extensions>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
 			</plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<outputDirectory>${basedir}/target/lib</outputDirectory>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							<mainClass>com.binchencoder.skylb.cmd.skylb.SkyLbStartup</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<outputDirectory>${basedir}/target/lib</outputDirectory>
 				</configuration>
-            </plugin>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -256,43 +271,43 @@
 					</execution>
 				</executions>
 			</plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.1</version>
-                <configuration>
-                    <altDeploymentRepository>
-                      internal.repo::default::file://${project.build.directory}/mvn-repo
-                    </altDeploymentRepository>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.github.github</groupId>
-                <artifactId>site-maven-plugin</artifactId>
-                <version>0.12</version>
-                <configuration>
-                    <message>Maven artifacts for ${project.version}</message>
-                    <noJekyll>true</noJekyll>
-                    <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory><!--本地jar地址-->
-                    <branch>refs/heads/master</branch><!--分支的名称-->
-                    <merge>true</merge>
-                    <includes>
-                        <include>**/*</include>
-                    </includes>
-                    <repositoryName>mvn-repo</repositoryName><!--对应github上创建的仓库名称 name-->
-                    <repositoryOwner>binchencoder</repositoryOwner><!--github 仓库所有者即登录用户名-->
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>site</goal>
-                        </goals>
-                        <phase>deploy</phase>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>2.8.1</version>
+				<configuration>
+					<altDeploymentRepository>
+					  internal.repo::default::file://${project.build.directory}/mvn-repo
+					</altDeploymentRepository>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.github</groupId>
+				<artifactId>site-maven-plugin</artifactId>
+				<version>0.12</version>
+				<configuration>
+					<message>Maven artifacts for ${project.version}</message>
+					<noJekyll>true</noJekyll>
+					<outputDirectory>${project.build.directory}/mvn-repo</outputDirectory><!--本地jar地址-->
+					<branch>refs/heads/master</branch><!--分支的名称-->
+					<merge>true</merge>
+					<includes>
+						<include>**/*</include>
+					</includes>
+					<repositoryName>mvn-repo</repositoryName><!--对应github上创建的仓库名称 name-->
+					<repositoryOwner>binchencoder</repositoryOwner><!--github 仓库所有者即登录用户名-->
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>site</goal>
+						</goals>
+						<phase>deploy</phase>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 	<profiles>
 		<profile>
 			<id>skylb</id>
@@ -307,15 +322,15 @@
 						<artifactId>maven-jar-plugin</artifactId>
 						<configuration>
 							<excludes>
-								<exclude>src/main/java/com/binchencoder/skylbwebserver/*</exclude>
+								<exclude>/com/binchencoder/skylb/cmd/skylbwebserver/**</exclude>
 							</excludes>
-							<outputDirectory>${basedir}/target/skylb-${project.version}</outputDirectory>
+							<outputDirectory>${basedir}/target/skylblib</outputDirectory>
 							<archive>
 								<manifest>
 									<addClasspath>true</addClasspath>
 									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 									<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-									<mainClass>com.binchencoder.skylb.SkyLbStartup</mainClass>
+									<mainClass>com.binchencoder.skylb.cmd.skylb.SkyLbStartup</mainClass>
 								</manifest>
 							</archive>
 						</configuration>
@@ -324,8 +339,27 @@
 						<groupId>org.springframework.boot</groupId>
 						<artifactId>spring-boot-maven-plugin</artifactId>
 						<configuration>
-							<outputDirectory>${basedir}/target/skylb-${project.version}</outputDirectory>
+							<outputDirectory>${basedir}/target/skylblib</outputDirectory>
 						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-assembly-plugin</artifactId>
+						<configuration>
+							<appendAssemblyId>false</appendAssemblyId>
+							<tarLongFileMode>posix</tarLongFileMode>
+							<descriptors>
+								<descriptor>src/main/assembly/assembly.xml</descriptor>
+							</descriptors>
+						</configuration>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>single</goal>
+								</goals>
+							</execution>
+						</executions>
 					</plugin>
 				</plugins>
 			</build>
@@ -334,6 +368,52 @@
 			<id>skylbwebserver</id>
 			<build>
 				<finalName>skylbwebserver-${project.version}</finalName>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-jar-plugin</artifactId>
+						<configuration>
+							<excludes>
+								<exclude>/com/binchencoder/skylb/cmd/skylb/**</exclude>
+							</excludes>
+							<outputDirectory>${basedir}/target/skylbweblib</outputDirectory>
+							<archive>
+								<manifest>
+									<addClasspath>true</addClasspath>
+									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+									<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+									<mainClass>com.binchencoder.skylb.cmd.skylbwebserver.WebServerStartup</mainClass>
+								</manifest>
+							</archive>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-maven-plugin</artifactId>
+						<configuration>
+							<outputDirectory>${basedir}/target/skylbweblib</outputDirectory>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-assembly-plugin</artifactId>
+						<configuration>
+							<appendAssemblyId>false</appendAssemblyId>
+							<tarLongFileMode>posix</tarLongFileMode>
+							<descriptors>
+								<descriptor>src/main/assembly/assembly-webserver.xml</descriptor>
+							</descriptors>
+						</configuration>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>single</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
 			</build>
 		</profile>
 	</profiles>

@@ -1,4 +1,4 @@
-package com.binchencoder.skylbwebserver;
+package com.binchencoder.skylb.cmd.skylbwebserver;
 
 public class WebServerStartup {
 

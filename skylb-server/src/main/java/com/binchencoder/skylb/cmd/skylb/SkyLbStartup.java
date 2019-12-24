@@ -1,4 +1,4 @@
-package com.binchencoder.skylb;
+package com.binchencoder.skylb.cmd.skylb;
 
 import ch.qos.logback.core.joran.spi.JoranException;
 import com.binchencoder.common.ShutdownHookThread;
