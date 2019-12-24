@@ -231,21 +231,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <outputDirectory>${basedir}/target/lib</outputDirectory>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                            <mainClass>com.binchencoder.skylb.SkyLbStartup</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
@@ -308,4 +293,48 @@
             </plugin>
         </plugins>
     </build>
+	<profiles>
+		<profile>
+			<id>skylb</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+				<finalName>skylb-${project.version}</finalName>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-jar-plugin</artifactId>
+						<configuration>
+							<excludes>
+								<exclude>src/main/java/com/binchencoder/skylbwebserver/*</exclude>
+							</excludes>
+							<outputDirectory>${basedir}/target/skylb-${project.version}</outputDirectory>
+							<archive>
+								<manifest>
+									<addClasspath>true</addClasspath>
+									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+									<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+									<mainClass>com.binchencoder.skylb.SkyLbStartup</mainClass>
+								</manifest>
+							</archive>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-maven-plugin</artifactId>
+						<configuration>
+							<outputDirectory>${basedir}/target/skylb-${project.version}</outputDirectory>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>skylbwebserver</id>
+			<build>
+				<finalName>skylbwebserver-${project.version}</finalName>
+			</build>
+		</profile>
+	</profiles>
 </project>
