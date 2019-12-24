@@ -12,31 +12,6 @@ fi
 SERVER_NAME='skylb'
 START_JAR=`ls -F $lib_dir | grep -i $SERVER_NAME | grep .jar$`
 
-# Generic jvm settings you want to add
-if [ -z "$JAVA_OPTS" ]; then
-  JAVA_OPTS=""
-fi
-
-# Set Debug options if enabled
-if [ "x$SKYLB_DEBUG" != "x" ]; then
-
-    # Use default ports
-    DEFAULT_JAVA_DEBUG_PORT="5005"
-
-    if [ -z "$JAVA_DEBUG_PORT" ]; then
-        JAVA_DEBUG_PORT="$DEFAULT_JAVA_DEBUG_PORT"
-    fi
-
-    # Use the defaults if JAVA_DEBUG_OPTS was not set
-    DEFAULT_JAVA_DEBUG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=${DEBUG_SUSPEND_FLAG:-n},address=$JAVA_DEBUG_PORT"
-    if [ -z "$JAVA_DEBUG_OPTS" ]; then
-        JAVA_DEBUG_OPTS="$DEFAULT_JAVA_DEBUG_OPTS"
-    fi
-
-    echo "Enabling Java debug options: $JAVA_DEBUG_OPTS"
-    JAVA_OPTS="$JAVA_DEBUG_OPTS $JAVA_OPTS"
-fi
-
 # Which java to use
 if [ -z "$JAVA_HOME" ]; then
   JAVA="java"
@@ -48,6 +23,10 @@ while [ $# -gt 0 ];
 do
   COMMAND=$1
   case $COMMAND in
+    -debug)
+      SKYLB_DEBUG="true"
+      shift
+      ;;
     -loggc)
       if [ -z "$JAVA_GC_LOG_OPTS" ]; then
         GC_LOG_ENABLED="true"
@@ -65,20 +44,45 @@ do
   esac
 done
 
+# Generic jvm settings you want to add
+if [ -z "$JAVA_OPTS" ]; then
+  JAVA_OPTS=""
+fi
+
+# Set Debug options if enabled
+if [ "x$SKYLB_DEBUG" != "x" ]; then
+
+  # Use default ports
+  DEFAULT_JAVA_DEBUG_PORT="5005"
+
+  if [ -z "$JAVA_DEBUG_PORT" ]; then
+    JAVA_DEBUG_PORT="$DEFAULT_JAVA_DEBUG_PORT"
+  fi
+
+  # Use the defaults if JAVA_DEBUG_OPTS was not set
+  DEFAULT_JAVA_DEBUG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=${DEBUG_SUSPEND_FLAG:-n},address=$JAVA_DEBUG_PORT"
+  if [ -z "$JAVA_DEBUG_OPTS" ]; then
+    JAVA_DEBUG_OPTS="$DEFAULT_JAVA_DEBUG_OPTS"
+  fi
+
+  echo "Enabling Java debug options: $JAVA_DEBUG_OPTS"
+  JAVA_OPTS="$JAVA_DEBUG_OPTS $JAVA_OPTS"
+fi
+
 # Log directory to use
 if [ "x$LOG_DIR" = "x" ]; then
-    LOG_DIR="$base_dir/logs"
+  LOG_DIR="$base_dir/logs"
 fi
 # Create logs directory
 if [ ! -d "$LOG_DIR" ]; then
-    mkdir -p "$LOG_DIR"
+  mkdir -p "$LOG_DIR"
 fi
 
 # Daemon mode console output
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
-    # Console output file when maxwell runs as a daemon
-    CONSOLE_OUTPUT_FILE=$LOG_DIR/$DAEMON_NAME.out
-    echo "Redirecting STDOUT to $CONSOLE_OUTPUT_FILE"
+  # Console output file when maxwell runs as a daemon
+  CONSOLE_OUTPUT_FILE=$LOG_DIR/$DAEMON_NAME.out
+  echo "Redirecting STDOUT to $CONSOLE_OUTPUT_FILE"
 fi
 
 # GC options
@@ -124,10 +128,15 @@ fi
 
 # Launch mode
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
-    nohup $JAVA $JAVA_HEAP_OPTS $JAVA_JVM_PERFORMANCE_OPTS $JAVA_GC_LOG_OPTS $JAVA_OPTS \
-      -jar $lib_dir/$START_JAR "$@" \
-      > "$CONSOLE_OUTPUT_FILE" 2>&1 < /dev/null &
+  nohup $JAVA $JAVA_HEAP_OPTS $JAVA_JVM_PERFORMANCE_OPTS $JAVA_GC_LOG_OPTS $JAVA_OPTS \
+    -jar $lib_dir/$START_JAR "$@" \
+    > "$CONSOLE_OUTPUT_FILE" 2>&1 < /dev/null &
 else
-    exec $JAVA $JAVA_HEAP_OPTS $JAVA_JVM_PERFORMANCE_OPTS $JAVA_GC_LOG_OPTS $JAVA_OPTS \
-      -jar $lib_dir/$START_JAR "$@"
+  exec $JAVA $JAVA_HEAP_OPTS $JAVA_JVM_PERFORMANCE_OPTS $JAVA_GC_LOG_OPTS $JAVA_OPTS \
+    -jar $lib_dir/$START_JAR "$@"
 fi
+
+# Echo PID
+PIDS=$(ps ax | grep -i 'skylb' | grep -i 'skylb-server' | grep java | grep -v grep | awk '{print $1}')
+echo
+echo "Started server PID: $PIDS"

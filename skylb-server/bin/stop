@@ -22,5 +22,5 @@ if [ -z "$PIDS" ]; then
   exit 1
 else
   kill -s $SIGNAL $PIDS
-  echo "Stoped skylb server, PID [$PIDS]"
+  echo "Stoped skylb server PID [$PIDS]"
 fi
