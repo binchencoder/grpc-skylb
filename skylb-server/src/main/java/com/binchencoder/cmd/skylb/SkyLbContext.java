@@ -102,12 +102,7 @@ public class SkyLbContext {
     this.server = serverBuilder.build().start();
     this.startDaemonAwaitThread();
 
-    try {
-      SkyLbHTTPServer.startIfRequired(this);
-    } catch (IOException e) {
-      e.printStackTrace();
-      this.terminate(e);
-    }
+    SkyLbHTTPServer.startIfRequired(this);
 
     // Initializes ETCD prefix keys.
     InitPrefix.newInstance(etcdClient);
@@ -115,6 +110,10 @@ public class SkyLbContext {
 
   public void addTask(StoppableTask task) {
     this.taskManager.add(task);
+  }
+
+  public Exception getError() {
+    return error;
   }
 
   public Thread terminate() {

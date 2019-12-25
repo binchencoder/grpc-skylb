@@ -16,19 +16,20 @@ public class SkyLbStartup {
 
   private static SkyLbContext skyLbContext;
 
+  public SkyLbStartup(String[] args)
+      throws URISyntaxException, JoranException, UnknownHostException {
+    this.skyLbContext = this.createSkyLbContext(args);
+  }
+
   public static void main(String[] args) {
     try {
-      skyLbContext = createSkyLbContext(args);
+      final SkyLbStartup startup = new SkyLbStartup(args);
       Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(LOGGER, (Callable<Void>) () -> {
         terminate();
         return null;
       }));
-      skyLbContext.start();
 
-//      String tip =
-//          "The SkyLB Server boot successed. gRPC port=" + skyLbContext.getServerConfig().getPort();
-//      LOGGER.info(tip);
-//      System.out.println(tip);
+      startup.start();
     } catch (JoranException e) {
       // catch JoranException explicitly because we likely don't care about the stacktrace
       LOGGER.error("JoranException: " + e.getLocalizedMessage());
@@ -54,6 +55,26 @@ public class SkyLbStartup {
     } catch (Exception e) {
       e.printStackTrace(System.err);
       System.exit(1);
+    } finally {
+      String tip =
+          "The SkyLB Server boot successed. gRPC port=" + skyLbContext.getServerConfig().getPort();
+      LOGGER.info(tip);
+      System.out.println(tip);
+    }
+  }
+
+  private void start() throws Exception {
+    try {
+      skyLbContext.start();
+    } catch (Exception e) {
+      this.skyLbContext.terminate(e);
+    } finally {
+      this.terminate();
+    }
+
+    Exception error = this.skyLbContext.getError();
+    if (error != null) {
+      throw error;
     }
   }
 

@@ -16,19 +16,21 @@ public class WebServerStartup {
 
   protected static SkyLbWebContext context;
 
+  public WebServerStartup(String[] args)
+      throws URISyntaxException, JoranException, UnknownHostException {
+    this.context = this.createSkyLbWebContext(args);
+  }
+
   public static void main(String[] args) {
     try {
-      context = createSkyLbWebContext(args);
+      final WebServerStartup startup = new WebServerStartup(args);
       Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(LOGGER, (Callable<Void>) () -> {
         terminate();
         return null;
       }));
-      context.start();
 
-      String tip =
-          "The SkyLB Web Server boot successed. HTTP port=" + context.getServerConfig().getPort();
-      LOGGER.info(tip);
-      System.out.println(tip);
+      startup.start();
+      Thread.sleep(Long.MAX_VALUE);
     } catch (JoranException e) {
       // catch JoranException explicitly because we likely don't care about the stacktrace
       LOGGER.error("JoranException: " + e.getLocalizedMessage());
@@ -54,6 +56,26 @@ public class WebServerStartup {
     } catch (Exception e) {
       e.printStackTrace(System.err);
       System.exit(1);
+    } finally {
+      String tip = "The SkyLB Web Server boot successed. HTTP port="
+          + context.getServerConfig().getHttpPort();
+      LOGGER.info(tip);
+      System.out.println(tip);
+    }
+  }
+
+  private void start() throws Exception {
+    try {
+      context.start();
+    } catch (Exception e) {
+      this.context.terminate(e);
+    } finally {
+      this.terminate();
+    }
+
+    Exception error = this.context.getError();
+    if (error != null) {
+      throw error;
     }
   }
 

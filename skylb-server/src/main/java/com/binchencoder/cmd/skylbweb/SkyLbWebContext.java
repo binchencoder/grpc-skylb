@@ -11,14 +11,12 @@ import com.binchencoder.common.jcommander.LevelConverter.LevelConverterInstanceF
 import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.config.AppConfig;
 import com.binchencoder.skylb.config.LoggerConfig;
-import com.binchencoder.skylb.config.MetricsConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
-import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
-import com.binchencoder.skylb.hub.SkyLbGraphImpl;
-import com.binchencoder.skylb.monitoring.SkyLbMetrics;
 import com.binchencoder.skylb.svcutil.AppUtil;
 import com.binchencoder.skylb.utils.Logging;
+import com.binchencoder.skylbweb.config.MetricsConfig;
 import com.binchencoder.skylbweb.config.ServerConfig;
+import com.binchencoder.skylbweb.monitoring.SkyLbMetrics;
 import com.binchencoder.skylbweb.monitoring.SkyLbWebHTTPServer;
 import com.binchencoder.util.StoppableTask;
 import com.binchencoder.util.TaskManager;
@@ -67,16 +65,15 @@ public class SkyLbWebContext {
   }
 
   public void start() throws IOException {
-    try {
-      SkyLbWebHTTPServer.startIfRequired(this);
-    } catch (IOException e) {
-      e.printStackTrace();
-      this.terminate(e);
-    }
+    SkyLbWebHTTPServer.startIfRequired(this);
   }
 
   public void addTask(StoppableTask task) {
     this.taskManager.add(task);
+  }
+
+  public Exception getError() {
+    return error;
   }
 
   public Thread terminate() {
@@ -127,8 +124,6 @@ public class SkyLbWebContext {
         .addObject(appConfig)
         .addObject(serverConfig)
         .addObject(loggerConfig)
-        .addObject(SkyLbServiceImpl.config)
-        .addObject(SkyLbGraphImpl.config)
         .addObject(metricsConfig)
         .addCommand(EtcdClient.etcdConfig)
         .addCommand(metricsConfig)
@@ -192,7 +187,7 @@ public class SkyLbWebContext {
     }
     /** ======================Load logback============================ **/
 
-    commander.getConsole().println("Start SKyLB Server ...");
+    commander.getConsole().println("Start SKyLB Web Server ...");
     commander.getConsole().println("JCommander: list all parameters key and values");
     for (Object ob : commander.getObjects()) {
       commander.getConsole().println(((AbstractConfig) ob).toKeyValues());

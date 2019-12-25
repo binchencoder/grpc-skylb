@@ -3,10 +3,10 @@ package com.binchencoder.skylbweb.monitoring;
 import static com.binchencoder.skylbweb.monitoring.SkyLbMetrics.reportingTypeHttp;
 
 import com.binchencoder.cmd.skylbweb.SkyLbWebContext;
-import com.binchencoder.skylb.config.MetricsConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.monitoring.SkyLbHealthCheck;
 import com.binchencoder.skylb.svclist.SvcListServlet;
+import com.binchencoder.skylbweb.config.MetricsConfig;
 import com.binchencoder.util.StoppableTask;
 import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
@@ -30,17 +30,19 @@ public class SkyLbWebHTTPServer {
     MetricsConfig metricsConfig = context.getMetricsConfig();
     if (Strings.isNullOrEmpty(metricsConfig.getMetricsType())) {
       LOGGER.warn("Metrics will not be exposed: metricsReportingType not configured.");
-      return;
     }
 
     SkyLbMetrics.Registries metricsRegistries = getMetricsRegistries(context);
-    LOGGER.info("SkyLB web metrics http server starting");
+    if (null != metricsRegistries) {
+      LOGGER.info("SkyLB web metrics http server starting");
+    }
 
-    int port = metricsConfig.getHttpPort();
+    int httpPort = context.getServerConfig().getHttpPort();
     InetAddress httpBindAddress = metricsConfig.getHttpBindAddress();
     String pathPrefix = metricsConfig.getHttpPathPrefix();
     SkyLblWebHTTPServerWorker skyLblHTTPServerWorker = new SkyLblWebHTTPServerWorker(
-        httpBindAddress, port, pathPrefix, metricsRegistries, context.getEtcdClient());
+        httpBindAddress, httpPort, pathPrefix, metricsRegistries, context.getEtcdClient());
+
     Thread thread = new Thread(skyLblHTTPServerWorker);
 
     context.addTask(skyLblHTTPServerWorker);
@@ -50,9 +52,9 @@ public class SkyLbWebHTTPServer {
     });
 
     thread.setDaemon(true);
-    thread.start();
+    thread.run();
     LOGGER.info("SkyLB metrics http server started on host:port => {}:{} ",
-        httpBindAddress.getHostAddress(), port);
+        httpBindAddress.getHostAddress(), httpPort);
   }
 
   private static SkyLbMetrics.Registries getMetricsRegistries(SkyLbWebContext context)
@@ -75,6 +77,7 @@ class SkyLblWebHTTPServerWorker implements StoppableTask, Runnable {
   private int port;
   private final String pathPrefix;
   private final SkyLbMetrics.Registries metricsRegistries;
+
   private final EtcdClient etcdClient;
 
   private Server server;
@@ -95,7 +98,7 @@ class SkyLblWebHTTPServerWorker implements StoppableTask, Runnable {
       this.server = new Server(this.port);
     }
     ServletContextHandler handler = new ServletContextHandler(this.server, pathPrefix);
-    handler.addServlet(new ServletHolder(new SvcListServlet(etcdClient)), "/api/v1/svc/list");
+    handler.addServlet(new ServletHolder(new SvcListServlet(etcdClient)), "/svc/list");
 
     if (metricsRegistries != null) {
       // TODO: there is a way to wire these up automagically via the AdminServlet, but it escapes me right now

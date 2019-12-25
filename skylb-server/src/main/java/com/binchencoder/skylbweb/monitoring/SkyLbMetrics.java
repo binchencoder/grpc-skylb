@@ -1,7 +1,7 @@
 package com.binchencoder.skylbweb.monitoring;
 
-import com.binchencoder.skylb.config.MetricsConfig;
 import com.binchencoder.skylb.monitoring.Metrics;
+import com.binchencoder.skylbweb.config.MetricsConfig;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
