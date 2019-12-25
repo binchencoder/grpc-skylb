@@ -240,7 +240,7 @@
 							<addClasspath>true</addClasspath>
 							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 							<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-							<mainClass>com.binchencoder.skylb.cmd.skylb.SkyLbStartup</mainClass>
+							<mainClass>com.binchencoder.cmd.skylb.SkyLbStartup</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -322,7 +322,8 @@
 						<artifactId>maven-jar-plugin</artifactId>
 						<configuration>
 							<excludes>
-								<exclude>/com/binchencoder/skylb/cmd/skylbwebserver/**</exclude>
+								<exclude>/com/binchencoder/cmd/skylbweb/**</exclude>
+								<exclude>/com/binchencoder/skylbweb/**</exclude>
 							</excludes>
 							<outputDirectory>${basedir}/target/skylblib</outputDirectory>
 							<archive>
@@ -330,7 +331,7 @@
 									<addClasspath>true</addClasspath>
 									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 									<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-									<mainClass>com.binchencoder.skylb.cmd.skylb.SkyLbStartup</mainClass>
+									<mainClass>com.binchencoder.cmd.skylb.SkyLbStartup</mainClass>
 								</manifest>
 							</archive>
 						</configuration>
@@ -365,7 +366,7 @@
 			</build>
 		</profile>
 		<profile>
-			<id>skylbwebserver</id>
+			<id>skylbweb</id>
 			<build>
 				<finalName>skylbwebserver-${project.version}</finalName>
 				<plugins>
@@ -374,7 +375,7 @@
 						<artifactId>maven-jar-plugin</artifactId>
 						<configuration>
 							<excludes>
-								<exclude>/com/binchencoder/skylb/cmd/skylb/**</exclude>
+								<exclude>/com/binchencoder/cmd/skylb/**</exclude>
 							</excludes>
 							<outputDirectory>${basedir}/target/skylbweblib</outputDirectory>
 							<archive>
@@ -382,7 +383,7 @@
 									<addClasspath>true</addClasspath>
 									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 									<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-									<mainClass>com.binchencoder.skylb.cmd.skylbwebserver.WebServerStartup</mainClass>
+									<mainClass>com.binchencoder.cmd.skylbweb.WebServerStartup</mainClass>
 								</manifest>
 							</archive>
 						</configuration>

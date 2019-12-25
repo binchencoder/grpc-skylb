@@ -1,6 +1,6 @@
 package com.binchencoder.skylb.monitoring;
 
-import com.binchencoder.skylb.cmd.skylb.SkyLbContext;
+import com.binchencoder.cmd.skylb.SkyLbContext;
 import com.binchencoder.skylb.config.MetricsConfig;
 import com.binchencoder.util.StoppableTask;
 import com.codahale.metrics.Counter;

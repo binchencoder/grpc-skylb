@@ -137,6 +137,6 @@ else
 fi
 
 # Echo PID
-PIDS=$(ps ax | grep -i 'skylbwebserver' | grep java | grep -v grep | awk '{print $1}')
+PIDS=$(ps ax | grep -i "$START_JAR" | grep java | grep -v grep | awk '{print $1}')
 echo
 echo "Started server PID: $PIDS"

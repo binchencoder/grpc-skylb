@@ -8,7 +8,11 @@ public class SkyLbHealthCheck extends HealthCheck {
   private final Meter failedMessageMeter;
 
   public SkyLbHealthCheck(AbstractProducer producer) {
-    this.failedMessageMeter = producer.getFailedMessageMeter();
+    if (null != producer) {
+      this.failedMessageMeter = producer.getFailedMessageMeter();
+    } else {
+      this.failedMessageMeter = null;
+    }
   }
 
   @Override

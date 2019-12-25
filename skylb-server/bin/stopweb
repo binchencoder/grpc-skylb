@@ -18,12 +18,12 @@ set -e
 
 base_dir="$(dirname "$0")/.."
 lib_dir="$base_dir/lib"
-lib_dir_development="$base_dir/target/skylblib"
+lib_dir_development="$base_dir/target/skylbweblib"
 if [ ! -e "$lib_dir" -a -e "$lib_dir_development" ]; then
 	lib_dir="$lib_dir_development"
 fi
 
-SERVER_NAME='skylb'
+SERVER_NAME='skylbwebserver'
 START_JAR=`ls -F $lib_dir | grep -i $SERVER_NAME | grep .jar$`
 
 SIGNAL=${SIGNAL:-TERM}

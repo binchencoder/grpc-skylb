@@ -12,6 +12,7 @@
 			<directory>${project.basedir}</directory>
 			<includes>
 				<include>bin/skylbweb</include>
+				<include>bin/stopweb</include>
 				<include>logback.xml.example</include>
 				<include>README*</include>
 				<include>LICENSE*</include>

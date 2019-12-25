@@ -1,4 +1,4 @@
-package com.binchencoder.skylb.cmd.skylb;
+package com.binchencoder.cmd.skylbweb;
 
 import static com.binchencoder.skylb.config.LoggerConfig.DEFAULT_LOGBACK_FILE;
 
@@ -6,37 +6,22 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.InetAddressConverter;
-import com.beust.jcommander.internal.Lists;
 import com.binchencoder.common.jcommander.DurationConverter.DurationConverterInstanceFactory;
 import com.binchencoder.common.jcommander.LevelConverter.LevelConverterInstanceFactory;
 import com.binchencoder.skylb.config.AbstractConfig;
 import com.binchencoder.skylb.config.AppConfig;
 import com.binchencoder.skylb.config.LoggerConfig;
 import com.binchencoder.skylb.config.MetricsConfig;
-import com.binchencoder.skylb.config.ServerConfig;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.grpc.SkyLbServiceImpl;
-import com.binchencoder.skylb.hub.EndpointsHub;
-import com.binchencoder.skylb.hub.EndpointsHubImpl;
-import com.binchencoder.skylb.hub.SkyLbGraph;
 import com.binchencoder.skylb.hub.SkyLbGraphImpl;
-import com.binchencoder.skylb.interceptors.HeaderInterceptor;
-import com.binchencoder.skylb.interceptors.HeaderServerInterceptor;
-import com.binchencoder.skylb.lameduck.LameDuck;
-import com.binchencoder.skylb.monitoring.AbstractProducer;
-import com.binchencoder.skylb.monitoring.NoneProducer;
-import com.binchencoder.skylb.monitoring.SkyLbHTTPServer;
 import com.binchencoder.skylb.monitoring.SkyLbMetrics;
-import com.binchencoder.skylb.prefix.InitPrefix;
 import com.binchencoder.skylb.svcutil.AppUtil;
 import com.binchencoder.skylb.utils.Logging;
+import com.binchencoder.skylbweb.config.ServerConfig;
+import com.binchencoder.skylbweb.monitoring.SkyLbWebHTTPServer;
 import com.binchencoder.util.StoppableTask;
 import com.binchencoder.util.TaskManager;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
-import io.grpc.ServerInterceptor;
-import io.grpc.ServerInterceptors;
-import io.grpc.ServerServiceDefinition;
 import io.grpc.StatusRuntimeException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -45,15 +30,13 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SkyLbContext {
+public class SkyLbWebContext {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SkyLbContext.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SkyLbWebContext.class);
 
   // SkyLB config
   private final AppConfig appConfig = new AppConfig();
@@ -63,7 +46,6 @@ public class SkyLbContext {
 
   // SkyLB metrics
   private final SkyLbMetrics metrics;
-  private AbstractProducer producer;
 
   // SKyLB tasks
   private final TaskManager taskManager;
@@ -72,45 +54,25 @@ public class SkyLbContext {
   private Thread terminationThread;
 
   private EtcdClient etcdClient;
-  private EndpointsHub endpointsHub;
-  private SkyLbGraph skyLbGraph;
-  private LameDuck lameDuck;
 
-  private Server server;
-
-  public SkyLbContext(String[] args)
+  public SkyLbWebContext(String[] args)
       throws JoranException, UnknownHostException, URISyntaxException, StatusRuntimeException {
     // Parsing the commander the parameters
     this.parseCommandArgs(args);
 
     this.etcdClient = new EtcdClient();
-    this.lameDuck = new LameDuck(etcdClient);
-    this.endpointsHub = new EndpointsHubImpl(etcdClient, lameDuck, serverConfig);
-    this.skyLbGraph = new SkyLbGraphImpl(etcdClient);
 
     this.metrics = new SkyLbMetrics(metricsConfig);
     this.taskManager = new TaskManager();
   }
 
   public void start() throws IOException {
-    SkyLbServiceImpl skyLbService = new SkyLbServiceImpl(endpointsHub, lameDuck, skyLbGraph);
-
-    // Bind server interceptors
-    final ServerBuilder<?> serverBuilder = ServerBuilder.forPort(serverConfig.getPort());
-    serverBuilder.addService(this.bindInterceptors(skyLbService.bindService()));
-
-    this.server = serverBuilder.build().start();
-    this.startDaemonAwaitThread();
-
     try {
-      SkyLbHTTPServer.startIfRequired(this);
+      SkyLbWebHTTPServer.startIfRequired(this);
     } catch (IOException e) {
       e.printStackTrace();
       this.terminate(e);
     }
-
-    // Initializes ETCD prefix keys.
-    InitPrefix.newInstance(etcdClient);
   }
 
   public void addTask(StoppableTask task) {
@@ -133,28 +95,6 @@ public class SkyLbContext {
       this.terminationThread = spawnTerminateThread();
     }
     return this.terminationThread;
-  }
-
-  public AbstractProducer getProducer() {
-    if (this.producer != null) {
-      return this.producer;
-    }
-    switch (this.metricsConfig.producerType) {
-      case "none":
-        this.producer = new NoneProducer(this);
-        break;
-      default:
-        throw new RuntimeException("Unknown producer type: " + this.metricsConfig.producerType);
-    }
-
-    StoppableTask task = null;
-    if (producer != null) {
-      task = producer.getStoppableTask();
-    }
-    if (task != null) {
-      addTask(task);
-    }
-    return this.producer;
   }
 
   public EtcdClient getEtcdClient() {
@@ -195,7 +135,7 @@ public class SkyLbContext {
         .addCommand("logger", loggerConfig, "log", "logging")
         .build();
     commander.setCaseSensitiveOptions(false);
-    commander.setProgramName("java -jar skylb[-{version}].jar");
+    commander.setProgramName("java -jar skylbwebserver[-{version}].jar");
     try {
       commander.parse(args);
     } catch (ParameterException e) {
@@ -216,7 +156,7 @@ public class SkyLbContext {
     }
 
     if (appConfig.isPrintVersion()) {
-      commander.getConsole().println(AppUtil.getAppVersion());
+      commander.getConsole().println(AppUtil.getVersion());
       System.exit(1);
     }
 
@@ -229,7 +169,7 @@ public class SkyLbContext {
     InputStream is = null;
     try {
       if (null == loggerConfig.getLogbackPath()) {
-        is = SkyLbStartup.class.getClassLoader().getResourceAsStream(DEFAULT_LOGBACK_FILE);
+        is = WebServerStartup.class.getClassLoader().getResourceAsStream(DEFAULT_LOGBACK_FILE);
       } else {
         is = new FileInputStream(loggerConfig.getLogbackPath().toFile());
       }
@@ -266,36 +206,10 @@ public class SkyLbContext {
     try {
       taskManager.stop(this.error);
 
-      this.endpointsHub.close();
-      this.skyLbGraph.close();
-
-      Optional.ofNullable(server).ifPresent(Server::shutdown);
-      LOGGER.info("SkyLb gRPC server stopped.");
-
       complete.set(true);
     } catch (Exception e) {
       LOGGER.error("Exception occurred during shutdown:", e);
     }
-  }
-
-  private void startDaemonAwaitThread() {
-    Thread awaitThread = new Thread(() -> {
-      try {
-        SkyLbContext.this.server.awaitTermination();
-      } catch (InterruptedException e) {
-        LOGGER.error("gRPC server stopped.", e);
-      }
-    });
-
-    awaitThread.setDaemon(false);
-    awaitThread.start();
-  }
-
-  // Bind server interceptors
-  private ServerServiceDefinition bindInterceptors(ServerServiceDefinition serviceDefinition) {
-    List<ServerInterceptor> interceptors = Lists.newArrayList(HeaderServerInterceptor.instance(),
-        HeaderInterceptor.instance());
-    return ServerInterceptors.intercept(serviceDefinition, interceptors);
   }
 
   private Thread spawnTerminateThread() {
@@ -303,7 +217,7 @@ public class SkyLbContext {
     // which won't end until we let its event loop progress,
     // we need to perform termination in a new thread
     final AtomicBoolean shutdownComplete = new AtomicBoolean(false);
-    final SkyLbContext self = this;
+    final SkyLbWebContext self = this;
     Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {

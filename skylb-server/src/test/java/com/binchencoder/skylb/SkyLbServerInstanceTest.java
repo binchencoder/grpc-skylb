@@ -1,6 +1,6 @@
 package com.binchencoder.skylb;
 
-import com.binchencoder.skylb.cmd.skylb.SkyLbContext;
+import com.binchencoder.cmd.skylb.SkyLbContext;
 import org.junit.After;
 import org.junit.Before;
 
