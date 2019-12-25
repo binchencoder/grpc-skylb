@@ -27,7 +27,7 @@ public class MetricsConfig extends AbstractConfig {
   private Duration metricsSlf4jInterval = Duration.ofSeconds(10);
 
   @Parameter(names = {"--http-path-prefix", "-http-path-prefix"},
-      description = "the http path prefix when metrics-type the http is enabled, default /")
+      description = "the http path prefix when metrics-type the http is enabled, default '/'. Don't add '/' to the front.")
   private String httpPathPrefix = "/";
 
   @Parameter(names = {"--http-bind-address", "-http-bind-address"},
@@ -61,6 +61,9 @@ public class MetricsConfig extends AbstractConfig {
   }
 
   public String getHttpPathPrefix() {
+    if (httpPathPrefix.indexOf('/') < 0) {
+      return "/" + httpPathPrefix;
+    }
     return httpPathPrefix;
   }
 

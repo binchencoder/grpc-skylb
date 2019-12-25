@@ -5,8 +5,8 @@ import static com.binchencoder.skylbweb.monitoring.SkyLbMetrics.reportingTypeHtt
 import com.binchencoder.cmd.skylbweb.SkyLbWebContext;
 import com.binchencoder.skylb.etcd.EtcdClient;
 import com.binchencoder.skylb.monitoring.SkyLbHealthCheck;
-import com.binchencoder.skylb.svclist.SvcListServlet;
 import com.binchencoder.skylbweb.config.MetricsConfig;
+import com.binchencoder.skylbweb.svclist.SvcListServlet;
 import com.binchencoder.util.StoppableTask;
 import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;

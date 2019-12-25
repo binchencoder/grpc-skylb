@@ -1,4 +1,4 @@
-package com.binchencoder.skylb.svclist;
+package com.binchencoder.skylbweb.svclist;
 
 import static com.binchencoder.skylb.constants.EtcdConst.SEPARATOR;
 import static com.binchencoder.skylb.prefix.InitPrefix.ENDPOINTS_KEY;
