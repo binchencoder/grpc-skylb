@@ -315,7 +315,7 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<build>
-				<finalName>skylb-${project.version}</finalName>
+				<finalName>skylb</finalName>
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
@@ -347,6 +347,7 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-assembly-plugin</artifactId>
 						<configuration>
+							<finalName>skylb-${project.version}</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 							<tarLongFileMode>posix</tarLongFileMode>
 							<descriptors>
@@ -368,7 +369,7 @@
 		<profile>
 			<id>skylbweb</id>
 			<build>
-				<finalName>skylbwebserver-${project.version}</finalName>
+				<finalName>skylbwebserver</finalName>
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
@@ -399,6 +400,7 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-assembly-plugin</artifactId>
 						<configuration>
+							<finalName>skylbwebserver-${project.version}</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 							<tarLongFileMode>posix</tarLongFileMode>
 							<descriptors>

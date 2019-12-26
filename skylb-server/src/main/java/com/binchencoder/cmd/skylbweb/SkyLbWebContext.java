@@ -130,7 +130,7 @@ public class SkyLbWebContext {
         .addCommand("logger", loggerConfig, "log", "logging")
         .build();
     commander.setCaseSensitiveOptions(false);
-    commander.setProgramName("java -jar skylbwebserver[-{version}].jar");
+    commander.setProgramName("java -jar skylbwebserver.jar");
     try {
       commander.parse(args);
     } catch (ParameterException e) {

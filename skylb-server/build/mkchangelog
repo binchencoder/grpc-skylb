@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'octokit'
+
+client = Octokit::Client.new(:netrc => true)
+
+puts "# SkyLb changelog"
+puts
+
+page = 1
+releases = client.releases('binchencoder/skylb', page: page)
+
+while releases.any?
+  releases.each do |r|
+    prerelease = !!(r[:tag_name] =~ /-\w+$/)
+    next if prerelease && r[:body].strip.empty?
+    out = <<-EOL
+### [%{tag_name}](%{html_url}): %{munged_name}
+
+%{body}
+    EOL
+
+    r[:body].gsub!(/\r\n/, "\n")
+    r[:munged_name] = r[:name].gsub(/^(\S+)\s+(.*)/, '\2')
+    puts out.strip % r
+    puts
+  end
+
+  page = page + 1
+  releases = client.releases('binchencoder/skylb', page: page)
+end
+
+
