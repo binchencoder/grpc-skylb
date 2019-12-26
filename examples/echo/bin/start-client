@@ -35,7 +35,7 @@ do
       ;;
     -daemon)
       DAEMON_MODE="true"
-      DAEMON_NAME="SkyLBDaemon"
+      DAEMON_NAME="SkyLBExampleDaemon"
       shift
       ;;
     *)
@@ -92,7 +92,7 @@ if [ "x$GC_LOG_ENABLED" = "xtrue" ]; then
   if [ "x$DAEMON_MODE" = "xtrue" ]; then
     GC_LOG_FILE_NAME=$DAEMON_NAME$GC_FILE_SUFFIX
   else
-    GC_LOG_FILE_NAME=SkyLB$GC_FILE_SUFFIX
+    GC_LOG_FILE_NAME=SkyLBExample$GC_FILE_SUFFIX
   fi;
 
   # The first segment of the version number, which is '1' for releases before Java 9
