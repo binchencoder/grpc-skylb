@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: CUSTOM_EASE_GATEWAY_TEST
+  profiles:
+    active: dev,metrics,skylb
+
+# gRPC
+grpc:
+  port: 9090
+skylb:
+  address: skylb:///
+
+# metrics
+metrics:
+  enabled: false
+  scrapePort: 10080
+
+# ----------------------------------------
+# CORE PROPERTIES
+# ----------------------------------------
+# Enable debug logs.
+debug: true
+# Enable trace logs.
+trace: false

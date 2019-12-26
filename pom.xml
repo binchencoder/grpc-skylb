@@ -81,6 +81,9 @@
 
 		<github.global.server>github</github.global.server>
 
+		<!-- Third-party -->
+		<com.google.guava.version>25.1-android</com.google.guava.version>
+
 		<!-- gRPC + ProtoBuffer -->
 		<grpc.version>1.18.0</grpc.version>
 		<protobuf.version>3.6.1</protobuf.version>
@@ -107,7 +110,7 @@
 		<dependencies>
 			<!-- Self services. -->
 			<!-- data-proto and frontend-proto have only one
-			 version (the SNAPSHOT version), thus can be enclosed by skylb-client. -->
+			 version (the SNAPSHOT version), thus can be enclosed by start-server-client. -->
 			<dependency>
 				<groupId>com.binchencoder.gateway</groupId>
 				<artifactId>data-proto</artifactId>
@@ -118,6 +121,11 @@
 			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>grpc-core</artifactId>
+				<version>${grpc.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.grpc</groupId>
+				<artifactId>grpc-context</artifactId>
 				<version>${grpc.version}</version>
 			</dependency>
 			<dependency>
@@ -164,6 +172,13 @@
 				<artifactId>javax.annotation-api</artifactId>
 				<version>1.2</version>
 				<scope>provided</scope>
+			</dependency>
+
+			<!-- Third-party Dependencies -->
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>${com.google.guava.version}</version>
 			</dependency>
 
 			<!-- Prometheus -->
