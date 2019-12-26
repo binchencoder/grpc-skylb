@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 @GrpcService(applyGlobalInterceptors = false, interceptors = ExceptionInterceptor.class)
 public class EchoGrpcService extends EchoServiceGrpc.EchoServiceImplBase {
 
-  final Logger logger = LoggerFactory.getLogger(EchoGrpcService.class);
+  private final Logger LOGGER = LoggerFactory.getLogger(EchoGrpcService.class);
 
   @Override
   public void echo(SimpleMessage request, StreamObserver<SimpleMessage> responseObserver) {
@@ -24,7 +24,7 @@ public class EchoGrpcService extends EchoServiceGrpc.EchoServiceImplBase {
 
   @Override
   public void echoBody(SimpleMessage request, StreamObserver<SimpleMessage> responseObserver) {
-    logger.info("echoBody: {}", request.toString());
+    LOGGER.info("echoBody: {}", request.toString());
     responseObserver.onNext(request.toBuilder().build());
     responseObserver.onCompleted();
   }
