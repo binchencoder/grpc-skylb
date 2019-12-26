@@ -110,6 +110,12 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 		</dependency>
+		<!-- JCommander: Command line parsing framework for Java -->
+		<!-- Docs: http://jcommander.org/ -->
+		<dependency>
+			<groupId>com.beust</groupId>
+			<artifactId>jcommander</artifactId>
+		</dependency>
 
 		<!-- Apache Commons -->
 		<dependency>
@@ -309,7 +315,7 @@
 									<addClasspath>true</addClasspath>
 									<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
 									<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-									<mainClass>com.binchencoder.skylb.examples.echo.server.EchoClient</mainClass>
+									<mainClass>com.binchencoder.skylb.examples.echo.client.EchoClient</mainClass>
 								</manifest>
 							</archive>
 						</configuration>

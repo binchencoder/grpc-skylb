@@ -83,6 +83,7 @@
 
 		<!-- Third-party -->
 		<com.google.guava.version>25.1-android</com.google.guava.version>
+		<jcommander.version>1.78</jcommander.version>
 
 		<!-- gRPC + ProtoBuffer -->
 		<grpc.version>1.18.0</grpc.version>
@@ -179,6 +180,15 @@
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
 				<version>${com.google.guava.version}</version>
+			</dependency>
+			<!-- JCommander: Command line parsing framework for Java -->
+			<!-- Docs: http://jcommander.org/ -->
+			<dependency>
+				<groupId>com.beust</groupId>
+				<artifactId>jcommander</artifactId>
+				<version>${jcommander.version}</version>
+				<scope>provided</scope>
+				<optional>true</optional>
 			</dependency>
 
 			<!-- Prometheus -->

@@ -57,7 +57,6 @@
 		<github.global.server>github</github.global.server>
 
 		<jetcd.version>0.3.0</jetcd.version>
-		<jcommander.version>1.78</jcommander.version>
 		<zipkin.version>2.19.2</zipkin.version>
 
 		<jetty.version>9.4.24.v20191120</jetty.version> <!--Jetty version-->
@@ -110,7 +109,6 @@
 		<dependency>
 			<groupId>com.beust</groupId>
 			<artifactId>jcommander</artifactId>
-			<version>${jcommander.version}</version>
 		</dependency>
 
 <!--		<dependency>-->
