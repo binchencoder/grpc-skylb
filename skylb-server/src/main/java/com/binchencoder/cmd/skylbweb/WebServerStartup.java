@@ -30,6 +30,11 @@ public class WebServerStartup {
       }));
 
       startup.start();
+
+      String tip = String.format("The SkyLB Web Server boot successed. HTTP port= %d",
+          context.getServerConfig().getHttpPort());
+      LOGGER.info(tip);
+      System.out.println(tip);
       Thread.sleep(Long.MAX_VALUE);
     } catch (JoranException e) {
       // catch JoranException explicitly because we likely don't care about the stacktrace
@@ -56,11 +61,6 @@ public class WebServerStartup {
     } catch (Exception e) {
       e.printStackTrace(System.err);
       System.exit(1);
-    } finally {
-      String tip = String.format("The SkyLB Web Server boot successed. HTTP port= %d",
-          context.getServerConfig().getHttpPort());
-      LOGGER.info(tip);
-      System.out.println(tip);
     }
   }
 
