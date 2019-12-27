@@ -54,7 +54,7 @@ public class EtcdClient {
       // catch URISyntaxException explicitly as well to provide more information to the user
       LOGGER.error(
           "Syntax issue with URI, check for configured --etcd-endpoints options (see RFC 2396)");
-      LOGGER.error("URISyntaxException: " + e.getLocalizedMessage());
+      LOGGER.error("URISyntaxException: {}", e.getLocalizedMessage());
       System.exit(1);
     }
   }

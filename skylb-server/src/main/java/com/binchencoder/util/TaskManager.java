@@ -34,22 +34,21 @@ public class TaskManager {
     }
     this.state = RunState.REQUEST_STOP;
 
-    LOGGER.info("Stopping " + tasks.size() + " tasks");
-
+    LOGGER.info("Stopping {} tasks", tasks.size());
     if (error != null) {
-      LOGGER.error("cause: ", error);
+      LOGGER.error("cause: {}", error);
     }
 
     // tell everything to stop
     for (StoppableTask task : this.tasks) {
-      LOGGER.info("Stopping: " + task);
+      LOGGER.info("Stopping: {}", task);
       task.requestStop();
     }
 
     // then wait for everything to stop
     Long timeout = 1000L;
     for (StoppableTask task : this.tasks) {
-      LOGGER.debug("Awaiting stop of: " + task);
+      LOGGER.debug("Awaiting stop of: {}", task);
       task.awaitStop(timeout);
     }
 

@@ -8,7 +8,7 @@ spring:
 grpc:
   port: 9090
 skylb:
-  address: skylb:///
+  address: skylb://localhost:1900/
 
 # metrics
 metrics:
@@ -19,6 +19,6 @@ metrics:
 # CORE PROPERTIES
 # ----------------------------------------
 # Enable debug logs.
-debug: true
+debug: false
 # Enable trace logs.
 trace: false

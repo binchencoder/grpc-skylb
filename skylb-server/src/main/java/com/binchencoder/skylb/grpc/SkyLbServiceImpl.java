@@ -240,7 +240,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
               resp.toBuilder().build().toString());
         } catch (Throwable t) {
           String errMsg = String.format(
-              "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
+              "Failed to send endpoints update to caller service ID %d client %s, abandon the stream.",
               request.getCallerServiceId(), remoteAddr.getHostString());
           LOGGER.error(errMsg, t);
           responseObserver
@@ -269,7 +269,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
       responseObserver.onCompleted();
     } catch (InterruptedException e) {
       String errMsg = String.format(
-          "Failed to send endpoints update to caller service ID {} client {}, abandon the stream, {}.",
+          "Failed to send endpoints update to caller service ID %d client %s, abandon the stream.",
           request.getCallerServiceId(), hostString);
       LOGGER.error(errMsg, e);
       responseObserver.onError(new StatusRuntimeException(

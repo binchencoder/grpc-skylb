@@ -94,7 +94,7 @@ public class SkyLbMetrics implements Metrics {
       } else {
         String portString = System.getProperty("com.sun.management.jmxremote.port");
         if (portString != null) {
-          LOGGER.info("JMX running on port " + Integer.parseInt(portString));
+          LOGGER.info("JMX running on port {}", Integer.parseInt(portString));
         }
       }
     }

@@ -29,7 +29,8 @@ public enum DurationStyle {
             .fromChronoUnit(unit))
             .parse(matcher.group(1));
       } catch (Exception ex) {
-        throw new IllegalArgumentException("'" + value + "' is not a valid simple duration", ex);
+        throw new IllegalArgumentException(
+            String.format("'%s' is not a valid simple duration", value), ex);
       }
     }
 
@@ -49,7 +50,8 @@ public enum DurationStyle {
       try {
         return Duration.parse(value);
       } catch (Exception ex) {
-        throw new IllegalArgumentException("'" + value + "' is not a valid ISO-8601 duration", ex);
+        throw new IllegalArgumentException(
+            String.format("'%s' is not a valid ISO-8601 duration", value), ex);
       }
     }
 
@@ -151,7 +153,7 @@ public enum DurationStyle {
         return candidate;
       }
     }
-    throw new IllegalArgumentException("'" + value + "' is not a valid duration");
+    throw new IllegalArgumentException(String.format("'%s' is not a valid duration", value));
   }
 
   /**

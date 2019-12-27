@@ -172,7 +172,7 @@ public class SkyLbWebContext {
       // catch FileNotFoundException explicitly as well to provide more information to the user
       LOGGER.error(
           "FileNotFound issue with logback xml, check parameter of --logback-path that the configured logback xml file exists");
-      LOGGER.error("FileNotFoundException: " + e.getLocalizedMessage());
+      LOGGER.error("FileNotFoundException: {}", e.getLocalizedMessage());
       System.exit(1);
     }
     Logging.configureLogback(is);
@@ -232,11 +232,11 @@ public class SkyLbWebContext {
           // ignore
         }
 
-        LOGGER.debug("Shutdown complete: " + shutdownComplete.get());
+        LOGGER.debug("Shutdown complete: {}", shutdownComplete.get());
         if (!shutdownComplete.get()) {
           LOGGER.error("Shutdown stalled - forcefully killing skylb process");
           if (self.error != null) {
-            LOGGER.error("Termination reason:", self.error);
+            LOGGER.error("Termination reason: {}", self.error);
           }
           Runtime.getRuntime().halt(1);
         }

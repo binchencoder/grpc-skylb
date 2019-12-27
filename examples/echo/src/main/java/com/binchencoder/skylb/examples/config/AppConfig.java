@@ -8,7 +8,7 @@ public class AppConfig extends AbstractConfig {
 
   @Parameter(names = {"--help", "-help", "--h", "-h"},
       description = "Print command line help", help = true)
-  private boolean help = false;
+  private boolean help;
 
   @Parameter(names = {"--version", "-version", "--v", "-v"},
       description = "Print application's version")
