@@ -114,12 +114,12 @@ fi
 
 # Memory options
 if [ -z "$JAVA_HEAP_OPTS" ]; then
-  JAVA_HEAP_OPTS="-Xmx256M"
+  JAVA_HEAP_OPTS="-Xmx128M"
 fi
 
 # JVM performance options
 if [ -z "$JAVA_JVM_PERFORMANCE_OPTS" ]; then
-  JAVA_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -Djava.awt.headless=true"
+  JAVA_JVM_PERFORMANCE_OPTS="-server -XX:SurvivorRatio=2 -XX:+UseParallelGC -Djava.awt.headless=true"
 fi
 
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
