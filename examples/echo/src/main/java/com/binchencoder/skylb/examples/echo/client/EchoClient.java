@@ -50,7 +50,7 @@ public class EchoClient {
   // 首先, 我们需要为stub创建一个grpc的channel, 指定我们连接服务端的地址和端口
   // 使用ManagedChannelBuilder方法来创建channel
   public EchoClient() {
-    channel = ClientTemplate.createChannel("skylb://localhost:1900/",
+    channel = ClientTemplate.createChannel(echoConfig.getSkylbAddr(),
         ServiceNameUtil.toString(ServiceId.CUSTOM_EASE_GATEWAY_TEST),
         "grpc", null,
         ServiceNameUtil.toString(ServiceId.SERVICE_NONE)).getOriginChannel();
@@ -197,14 +197,23 @@ class EchoConfig extends AbstractConfig {
       description = "The param of invoke echo server.", required = true)
   private String echoId;
 
+  @Parameter(names = {"--skylb-address", "-skylb-address"},
+      description = "The address of skylb server.")
+  private String skylbAddr = "skylb://localhost:1900/";
+
   public String getEchoId() {
     return echoId;
+  }
+
+  public String getSkylbAddr() {
+    return skylbAddr;
   }
 
   @Override
   public String toKeyValues() {
     return new StringBuilder()
-        .append("--echo-id").append("=").append(this.getEchoId())
+        .append("--echo-id").append("=").append(this.getEchoId()).append("\n")
+        .append("--skylb-address").append("=").append(this.getSkylbAddr())
         .toString();
   }
 }

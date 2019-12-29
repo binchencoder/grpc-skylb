@@ -31,10 +31,10 @@ public class SkyLbStartup {
 
       startup.start();
 
-      String tip = String.format("The SkyLB Server boot successed. gRPC port= %d",
-          skyLbContext.getServerConfig().getPort());
-      LOGGER.info(tip);
-      System.out.println(tip);
+//      String tip = String.format("The SkyLB Server boot successed. gRPC port= %d",
+//          skyLbContext.getServerConfig().getPort());
+//      LOGGER.info(tip);
+//      System.out.println(tip);
     } catch (JoranException e) {
       // catch JoranException explicitly because we likely don't care about the stacktrace
       LOGGER.error("JoranException: {}", e.getLocalizedMessage());
@@ -68,9 +68,11 @@ public class SkyLbStartup {
       skyLbContext.start();
     } catch (Exception e) {
       this.skyLbContext.terminate(e);
-    } finally {
-      this.terminate();
     }
+    // 执行以下代码, 程序自动关闭了
+    /*finally {
+      this.terminate();
+    }*/
 
     Exception error = this.skyLbContext.getError();
     if (error != null) {
