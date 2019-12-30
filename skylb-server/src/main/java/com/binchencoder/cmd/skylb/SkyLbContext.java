@@ -265,8 +265,9 @@ public class SkyLbContext {
     try {
       taskManager.stop(this.error);
 
-      this.endpointsHub.close();
-      this.skyLbGraph.close();
+      Optional.ofNullable(this.endpointsHub).get().close();
+      Optional.ofNullable(this.skyLbGraph).get().close();
+      Optional.ofNullable(this.etcdClient).get().close();
 
       Optional.ofNullable(server).ifPresent(Server::shutdown);
       LOGGER.info("SkyLb gRPC server stopped.");

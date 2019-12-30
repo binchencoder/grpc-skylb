@@ -48,6 +48,7 @@ import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import io.prometheus.client.Gauge;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
@@ -287,9 +288,10 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   @Override
-  public void close() throws Exception {
-    Optional.ofNullable(endpointExecutor).ifPresent(ExecutorService::shutdown);
+  public void close() throws IOException {
     LOGGER.info("Shutting down endpointExecutor ...");
+    Optional.ofNullable(endpointExecutor).ifPresent(ExecutorService::shutdown);
+    LOGGER.info("endpointExecutor has shut down  ...");
   }
 
   private void startK8sWatcher() throws StatusRuntimeException {

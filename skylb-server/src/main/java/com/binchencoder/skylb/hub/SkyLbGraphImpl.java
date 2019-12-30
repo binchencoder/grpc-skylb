@@ -9,6 +9,7 @@ import com.binchencoder.skylb.etcd.KeyUtil;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import io.etcd.jetcd.ByteSequence;
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Map;
@@ -114,13 +115,14 @@ public class SkyLbGraphImpl implements SkyLbGraph {
   }
 
   @Override
-  public void close() throws Exception {
-    Optional.ofNullable(serviceGraphExecutor).ifPresent(ExecutorService::shutdown);
+  public void close() throws IOException {
     LOGGER.info("Shutting down serviceGraphExecutor ...");
+    Optional.ofNullable(serviceGraphExecutor).ifPresent(ExecutorService::shutdown);
+    LOGGER.info("serviceGraphExecutor has shut down ...");
 
     if (null != this.timer) {
       this.timer.cancel();
-      LOGGER.info("Canceling graph track timer ...");
+      LOGGER.info("graph track timer has canceled ...");
     }
   }
 

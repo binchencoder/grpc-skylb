@@ -27,20 +27,24 @@ import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EtcdClient {
+public class EtcdClient implements Closeable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClient.class);
 
+  private final Client client;
   private final KV kvClient;
   private final Watch watchClient;
   private final Lease leaseClient;
@@ -64,7 +68,7 @@ public class EtcdClient {
 
     LOGGER.info("Initializing the etcd client, etcd-endpoints: {}", etcdConfig.getEndpoints());
     // create client
-    Client client = this.initClient();
+    this.client = this.initClient();
     Preconditions.checkNotNull(client, "Failed to initialized etcd client.");
 
     this.kvClient = client.getKVClient();
@@ -156,6 +160,13 @@ public class EtcdClient {
 
   public Lease getLeaseClient() {
     return leaseClient;
+  }
+
+  @Override
+  public void close() throws IOException {
+    LOGGER.info("Closing etcd client ...");
+    Optional.ofNullable(client).ifPresent(Client::close);
+    LOGGER.info("etcd client has closed ...");
   }
 
   private Client initClient() {

@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -196,10 +197,12 @@ public class SkyLbWebContext {
   }
 
   private void shutdown(AtomicBoolean complete) {
-    LOGGER.info("Shutting down gRPC server ...");
+    LOGGER.info("Shutting down skylb web server ...");
 
     try {
       taskManager.stop(this.error);
+
+      Optional.ofNullable(this.etcdClient).get().close();
 
       complete.set(true);
     } catch (Exception e) {
