@@ -192,8 +192,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).inc();
         LOGGER.info(
             "Registered caller service ID {} client {} to observe service {}.{} on port name {}",
-            request.getCallerServiceId(), hostString, spec.getNamespace(),
-            spec.getServiceName(), spec.getPortName());
+            request.getCallerServiceId(), hostString,
+            spec.getNamespace(), spec.getServiceName(), spec.getPortName());
       }
 
       timer = new Timer();
@@ -413,7 +413,6 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         request.getCallerServiceId(), remoteAddr.toString());
     endpointsHub.removeObserver(specs, remoteAddr.toString());
     for (ServiceSpec spec : specs) {
-      skyLbGraph.trackServiceGraph(request, spec, remoteAddr);
       activeObserverGauge
           .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).dec();
     }

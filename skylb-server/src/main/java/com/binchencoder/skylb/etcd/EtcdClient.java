@@ -170,7 +170,8 @@ public class EtcdClient implements Closeable {
   }
 
   private Client initClient() {
-    ClientBuilder clientBuilder = Client.builder().endpoints(etcdConfig.getEndpoints());
+    ClientBuilder clientBuilder = Client.builder().lazyInitialization(false)
+        .endpoints(etcdConfig.getEndpoints());
     return clientBuilder.build();
   }
 
