@@ -82,7 +82,7 @@
 		<github.global.server>github</github.global.server>
 
 		<!-- Third-party -->
-		<com.google.guava.version>25.1-android</com.google.guava.version>
+		<com.google.guava.version>28.2-jre</com.google.guava.version>
 		<jcommander.version>1.78</jcommander.version>
 
 		<!-- gRPC + ProtoBuffer -->
@@ -295,6 +295,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<compilerArguments>
+						<arg>-Xlint:unchecked,-Xlint:deprecation</arg>
+					</compilerArguments>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
