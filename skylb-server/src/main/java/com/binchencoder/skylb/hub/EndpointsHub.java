@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * EndpointsHub defines the service endpoints hub based on etcd.
  */
-public interface EndpointsHub extends Closeable {
+public interface EndpointsHub extends AutoCloseable {
 
   int ChanCapMultiplication = 10;
 

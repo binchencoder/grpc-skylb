@@ -288,7 +288,7 @@ public class EndpointsHubImpl implements EndpointsHub {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws Exception {
     LOGGER.info("Shutting down endpointExecutor ...");
     Optional.ofNullable(endpointExecutor).ifPresent(ExecutorService::shutdown);
     LOGGER.info("endpointExecutor has shut down  ...");

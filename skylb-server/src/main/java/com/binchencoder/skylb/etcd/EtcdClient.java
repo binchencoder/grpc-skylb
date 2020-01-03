@@ -27,8 +27,6 @@ import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
-import java.io.Closeable;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -40,7 +38,7 @@ import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EtcdClient implements Closeable {
+public class EtcdClient implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClient.class);
 
@@ -163,7 +161,7 @@ public class EtcdClient implements Closeable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws Exception {
     LOGGER.info("Closing etcd client ...");
     Optional.ofNullable(client).ifPresent(Client::close);
     LOGGER.info("etcd client has closed ...");

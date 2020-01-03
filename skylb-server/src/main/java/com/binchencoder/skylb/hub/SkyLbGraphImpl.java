@@ -9,7 +9,6 @@ import com.binchencoder.skylb.etcd.KeyUtil;
 import com.binchencoder.skylb.proto.ClientProtos.ResolveRequest;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import io.etcd.jetcd.ByteSequence;
-import java.io.IOException;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Map;
@@ -115,7 +114,7 @@ public class SkyLbGraphImpl implements SkyLbGraph {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws Exception {
     LOGGER.info("Shutting down serviceGraphExecutor ...");
     Optional.ofNullable(serviceGraphExecutor).ifPresent(ExecutorService::shutdown);
     LOGGER.info("serviceGraphExecutor has shut down ...");
