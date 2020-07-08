@@ -57,14 +57,18 @@ public class InitPrefix {
       }
     } catch (InterruptedException | ExecutionException e) {
       LOGGER.error("Etcd client get key error, key[{}]", key);
+      return;
     }
 
     // For whatever reason it failed, let's try to create the key.
     if (!preExist) {
-      boolean isDone = kvClient
-          .put(byteKey, ByteSequence.from(ByteString.EMPTY), PutOption.newBuilder().build())
-          .isDone();
+      try {
+        boolean isDone = kvClient
+            .put(byteKey, ByteSequence.from(ByteString.EMPTY), PutOption.newBuilder().build())
+            .isDone();
+      } catch (Exception e) {
+        throw e;
+      }
     }
   }
-
 }

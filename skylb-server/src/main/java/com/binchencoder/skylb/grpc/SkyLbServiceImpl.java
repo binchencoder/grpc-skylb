@@ -236,7 +236,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         final CountDownLatch respLatch = new CountDownLatch(1);
         try {
           responseObserver.onNext(resp);
-          LOGGER.debug("responseObserver.onNext: clientAddr: {}, resp: {}", hostString,
+          LOGGER.error("responseObserver.onNext: clientAddr: {}, resp: {}", hostString,
               resp.toBuilder().build().toString());
         } catch (Throwable t) {
           String errMsg = String.format(
@@ -265,7 +265,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
         }
       }
 
-      LOGGER.debug("responseObserver.onCompleted(), clientAddr: {}", hostString);
+      LOGGER.error("responseObserver.onCompleted(), clientAddr: {}", hostString);
       responseObserver.onCompleted();
     } catch (InterruptedException e) {
       String errMsg = String.format(
