@@ -249,7 +249,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
           respLatch.countDown();
         }
         try {
-          respLatch.await(config.getFlagNotifyTimeout(), TimeUnit.SECONDS);
+          respLatch.await(config.getFlagNotifyTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException ie) {
           // Discard the current gRPC stream if timeout.
           LOGGER.error(
