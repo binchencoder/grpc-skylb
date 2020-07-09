@@ -55,8 +55,7 @@ public class EchoClient {
         "grpc", null,
         ServiceNameUtil.toString(ServiceId.SERVICE_NONE)).getOriginChannel();
 
-    blockingStub = EchoServiceGrpc.newBlockingStub(channel)
-        .withDeadlineAfter(20000, TimeUnit.MILLISECONDS);
+    blockingStub = EchoServiceGrpc.newBlockingStub(channel);
   }
 
   /**
@@ -69,17 +68,21 @@ public class EchoClient {
 
     EchoClient client = new EchoClient();
 
-    CountDownLatch latch = new CountDownLatch(1);
+//    CountDownLatch latch = new CountDownLatch(1);
     try {
-      for (int i = 0; i < 100; i++) {
-//        client.echo(user);
-        new Thread(() -> {
-          client.echo();
-        }).start();
+      int times = 0;
+      while (true) {
+        for (int i = 0; i < 100; i++) {
+          new Thread(() -> {
+            client.echo();
+          }).start();
+        }
+        ++times;
+        Thread.sleep(times * 10);
       }
 
-      latch.await();
-      latch.countDown();
+//      latch.await();
+//      latch.countDown();
     } finally {
       client.shutdown();
     }
