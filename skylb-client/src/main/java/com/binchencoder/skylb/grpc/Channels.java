@@ -162,7 +162,7 @@ public class Channels implements SizerUser {
                 logger.error("Failed to send a health check for an instance of service {}", calleeServiceName, e);
               }
 //              try {
-//                Thread.sleep(1000); // fuyc: uncomment to verify health check working in correct order.
+//                Thread.sleep(1000); // uncomment to verify health check working in correct order.
 //              } catch (InterruptedException e) {
 //                e.printStackTrace();
 //              }

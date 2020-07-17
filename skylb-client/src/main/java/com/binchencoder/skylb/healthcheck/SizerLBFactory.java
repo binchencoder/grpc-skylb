@@ -9,7 +9,7 @@ public interface SizerLBFactory {
    * This method is necessary, in case some client code still provides
    * XXLBFactory.getInstance() as initial LB factory object.
    *
-   * TODO(fuyc): Maybe not optimal for grpc usage.
+   * TODO: Maybe not optimal for grpc usage.
    */
   SizerLBFactory newInstance();
 

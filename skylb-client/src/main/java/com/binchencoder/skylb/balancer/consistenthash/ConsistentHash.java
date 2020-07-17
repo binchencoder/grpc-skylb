@@ -50,7 +50,7 @@ public class ConsistentHash {
       SocketAddress sa = addrs.get(0);
       if (sa instanceof InetSocketAddress) {
         InetSocketAddress addr = (InetSocketAddress) sa;
-        // TODO(fuyc): may need to handle when address is hostname/domain
+        // TODO: may need to handle when address is hostname/domain
         // instead of IP.
         key = String.format("%s:%d", addr.getHostString(), addr.getPort());
       }

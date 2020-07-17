@@ -56,7 +56,7 @@ public class ServerDiscovery {
 
     Iterator<ResolveResponse> iter = SkylbGrpc.newBlockingStub(this.channel)
         .resolve(ResolveRequest.newBuilder()
-            // .setCallerServiceId(csId) // (fuyc): will not pass id now.
+            // .setCallerServiceId(csId) // will not pass id now.
             .setCallerServiceName(callerServiceName)
             .addAllServices(serviceSpecs)
             .setResolveFullEndpoints(true)

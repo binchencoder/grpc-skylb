@@ -11,7 +11,7 @@ import org.junit.Test;
 /**
  * The test cases are adapted from @com_github_binchencoder_letsgo//hashring/hashring_test.go.
  *
- * @author fuyc@github.com/binchencoder
+ * @author binchencoder@github.com/binchencoder
  */
 public class Crc32HashTest {
 

@@ -9,8 +9,8 @@ import java.util.TreeMap;
 /**
  * (Adapted from https://community.oracle.com/blogs/tomwhite/2007/11/27/consistent-hashing)
  *
- * This is the origin of com/jingoal/skylb/balancer/consistenthash/ConsistentHash.java.
- * Keep the copy here for basic function testing.
+ * <p>This is the origin of {@link com.binchencoder.skylb.balancer.consistenthash.ConsistentHash}
+ * Keep the copy here for basic function testing.</p>
  */
 public class ConsistentHashPrototype<T> {
 

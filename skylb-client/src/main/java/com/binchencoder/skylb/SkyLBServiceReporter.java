@@ -97,7 +97,7 @@ public class SkyLBServiceReporter {
   public void register(String namespace, String serviceName, String portName,
                        final int port, final ReportCallback cb) throws Exception {
 
-    // TODO(fuyc): change default value to true when most apps are k8s-ready.
+    // TODO: change default value to true when most apps are k8s-ready.
     if (Objects.equal("true", Properties.withinK8s)) {
       logger.info("Spec [{}, {}, {}, {}] start within k8s, load-reporting disabled",
           namespace, serviceName, portName, port);
