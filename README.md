@@ -1,4 +1,5 @@
-# grpc-skylb
+gRPC SkyLB
+==========
 
 `gRPC SkyLB`: an external gRPC load balancer based on [External Load Balancing Service](https://github.com/grpc/grpc/blob/master/doc/load-balancing.md#external-load-balancing-service). Implemented in the Java language. The design follows the gRPC Load Balancer Architecture (https://github.com/grpc/grpc/blob/master/doc/load-balancing.md)
 
@@ -39,7 +40,7 @@ As shown in the diagram, we will go into the implementation details below:
 
 After a client connects to the `SkyLB` server, it starts a two-way gRPC stream call. The client then comes into a passive mode, waiting for instruction from the server. When the time comes (for example when user triggers it through UI), the server sends a specific request to the client, and the client executes the instruction and returns with a corresponding response.
 
-> *NOTE* 
+> *NOTE*
 >
 > that whenever an error is caused during the streaming talk, the stream has to be discarded and a new stream should be created (by the client).
 
