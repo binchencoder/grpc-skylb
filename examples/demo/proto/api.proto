@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package proto;
+
+option java_multiple_files = false;
+option java_outer_classname = "GreetingProtos";
+option java_package = "com.binchencoder.skylb.demo.proto";
+
+import "httpoptions/annotations.proto";
+
+// The request message to be greeted.
+message GreetingRequest {
+	string name = 1;
+	int32  age  = 2;
+}
+
+// The response message to greet the requester.
+message GreetingResponse {
+	string greeting = 1;
+}
+
+// The gRPC service definition for SkyLB demo.
+service Demo {
+	option (ease.api.service_spec) = {
+		service_id: SHARED_TEST_CLIENT_SERVICE
+		port_name : "portname"
+		namespace : "namespace_0"
+		gen_controller: true
+	};
+
+	rpc Greeting (GreetingRequest) returns (GreetingResponse) {
+		option (ease.api.http) = {
+			get: "/v1/greeting/{name}"
+		};
+	};
+
+	rpc GreetingForEver (GreetingRequest) returns (stream GreetingResponse) {}
+}
+
+// The gRPC service definition for SkyLB demo.
+service Demo1 {
+	option (ease.api.service_spec) = {
+		service_id: SHARED_TEST_SERVER_SERVICE
+		port_name : "portname"
+		namespace : "namespace_0"
+		gen_controller: true
+	};
+
+	rpc Greeting (GreetingRequest) returns (GreetingResponse) {
+		option (ease.api.http) = {
+			get: "/v1/greeting/{name}"
+		};
+	};
+
+	rpc GreetingForEver (GreetingRequest) returns (stream GreetingResponse) {}
+}
