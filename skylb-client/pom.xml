@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>skylb-client</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0</version>
+	<version>1.0-SNAPSHOT</version>
 	<name>gRPC SkyLB Client</name>
 
 	<parent>

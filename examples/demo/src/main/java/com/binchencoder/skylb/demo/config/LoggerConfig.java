@@ -16,7 +16,7 @@ public class LoggerConfig extends AbstractConfig {
 
   @Parameter(names = {"--log-to-stdout", "-log-to-stdout"},
       description = "Whether to print the log to the console.")
-  private boolean logToStdout = false;
+  private boolean logToStdout = true;
 
   @Parameter(names = {"--logback-path", "-logback-path"},
       description = "Location of logback xml file.")
