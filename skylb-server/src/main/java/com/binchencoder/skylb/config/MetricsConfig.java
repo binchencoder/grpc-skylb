@@ -13,7 +13,7 @@ import java.util.Objects;
     commandNames = {"metrics"}, commandDescription = "Help for skylb metrics: ")
 public class MetricsConfig extends AbstractConfig {
 
-  @Parameter(names = {"--metrics-prefix", "-metrics_prefix"},
+  @Parameter(names = {"--metrics-prefix", "-metrics-prefix"},
       description = "The prefix skylb will apply to all metrics")
   private String metricsPrefix;
 
