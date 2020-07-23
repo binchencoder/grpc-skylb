@@ -241,9 +241,7 @@ public class GreetingClient {
         }
         LOGGER.info("Hello response: {}", response.getGreeting());
       } catch (StatusRuntimeException e) {
-        if (e.getStatus() == Status.DEADLINE_EXCEEDED) {
-          LOGGER.warn("Hello exceeded deadline.");
-        }
+        LOGGER.error("Hello error:", e);
       } catch (RuntimeException e) {
         LOGGER.error("Hello Error", e);
 
