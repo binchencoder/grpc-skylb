@@ -17,7 +17,7 @@ public class ZebraClientTracing {
 
   public Span startTrace(String method) {
     String id = UUID.randomUUID().toString();
-    String traceId = null;
+    String traceId;
     if (null == TraceContext.getTraceId()) {
       TraceContext.start();
       traceId = id;
