@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 public class Configuration {
 
-  static Logger logger = LoggerFactory.getLogger(Configuration.class);
+  static Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
   public static final String METRICS_IP = "0.0.0.0";
   public static final int METRICS_PORT = 1949;

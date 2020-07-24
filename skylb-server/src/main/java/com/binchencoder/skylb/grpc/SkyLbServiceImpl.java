@@ -135,6 +135,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
   private final SkyLbGraph skyLbGraph;
 
   public static final Config config = new Config();
+
   public SkyLbServiceImpl(final EndpointsHub endpointsHub, final LameDuck lameDuck,
       final SkyLbGraph skyLbGraph) {
     this.endpointsHub = endpointsHub;
@@ -192,8 +193,8 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             .labels(this.formatServiceSpec(spec.getNamespace(), spec.getServiceName())).inc();
         LOGGER.info(
             "Registered caller service ID {} client {} to observe service {}.{} on port name {}",
-            request.getCallerServiceId(), hostString,
-            spec.getNamespace(), spec.getServiceName(), spec.getPortName());
+            request.getCallerServiceId(), hostString, spec.getNamespace(), spec.getServiceName(),
+            spec.getPortName());
       }
 
       timer = new Timer();
@@ -420,7 +421,7 @@ public class SkyLbServiceImpl extends SkylbImplBase {
 
   private void logResolveEndpoints(ResolveRequest request, InetSocketAddress remoteAddr,
       ServiceEndpoints eps) {
-    if (LOGGER.isDebugEnabled()) {
+    if (LOGGER.isInfoEnabled()) {
       StringBuffer sb = new StringBuffer();
       for (int i = 0; i < eps.getInstEndpointsCount(); i++) {
         if (i > 0) {
@@ -431,11 +432,11 @@ public class SkyLbServiceImpl extends SkylbImplBase {
             String.format("[%s]%s:%d", opToString(iep.getOp()), iep.getHost(), iep.getPort()));
       }
       if (request.getResolveFullEndpoints()) {
-        LOGGER.debug("Full endpoints of service {} for caller service ID %d client {}: {}.",
+        LOGGER.info("Full endpoints of service {} for caller service ID {} client {}: {}.",
             eps.getSpec().getServiceName(), request.getCallerServiceId(),
             remoteAddr.getHostString(), sb.toString());
       } else {
-        LOGGER.debug("Endpoints changed for caller service ID {} client {} with updates {}.",
+        LOGGER.info("Endpoints changed for caller service ID {} client {} with updates {}.",
             request.getCallerServiceId(), remoteAddr.getHostString(), sb.toString());
       }
     } else {

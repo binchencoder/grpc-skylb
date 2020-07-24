@@ -7,6 +7,7 @@ import com.binchencoder.skylb.proto.ClientProtos.ResolveResponse;
 import com.binchencoder.skylb.proto.ClientProtos.ServiceSpec;
 import com.binchencoder.skylb.proto.SkylbGrpc;
 
+import com.binchencoder.skylb.util.ServiceNameUtil;
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.List;
@@ -56,7 +57,7 @@ public class ServerDiscovery {
 
     Iterator<ResolveResponse> iter = SkylbGrpc.newBlockingStub(this.channel)
         .resolve(ResolveRequest.newBuilder()
-            // .setCallerServiceId(csId) // will not pass id now.
+             .setCallerServiceId(ServiceNameUtil.toServiceId(callerServiceName))
             .setCallerServiceName(callerServiceName)
             .addAllServices(serviceSpecs)
             .setResolveFullEndpoints(true)
