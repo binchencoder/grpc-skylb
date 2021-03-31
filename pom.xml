@@ -82,7 +82,7 @@
 		<github.global.server>github</github.global.server>
 
 		<!-- Third-party -->
-		<com.google.guava.version>28.2-jre</com.google.guava.version>
+		<com.google.guava.version>29.0-jre</com.google.guava.version>
 		<jcommander.version>1.78</jcommander.version>
 
 		<!-- gRPC + ProtoBuffer -->
