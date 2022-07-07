@@ -59,7 +59,7 @@
 		<jetcd.version>0.3.0</jetcd.version>
 		<zipkin.version>2.19.2</zipkin.version>
 
-		<jetty.version>9.4.24.v20191120</jetty.version> <!--Jetty version-->
+		<jetty.version>10.0.10</jetty.version> <!--Jetty version-->
 		<dropwizard.version>4.1.1</dropwizard.version>
 	</properties>
 
